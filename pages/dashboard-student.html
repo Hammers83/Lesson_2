@@ -1,0 +1,150 @@
+<!DOCTYPE html>
+<html lang="it" class="h-full">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ZUMBA con Angelo | Le Mie Lezioni</title>
+    
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        brand: { lime: '#CCFF00', cyan: '#00E5FF', pink: '#FF007F', dark: '#0B0F19', card: '#131927', border: '#202A40' }
+                    }
+                }
+            }
+        }
+    </script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="../css/style.css">
+</head>
+<body class="bg-brand-dark text-gray-100 font-sans min-h-screen flex flex-col antialiased">
+
+    <!-- NAVBAR -->
+    <nav class="sticky top-0 z-40 glass-panel border-b border-brand-border">
+        <div class="max-w-7xl mx-auto px-4 py-3.5 flex justify-between items-center">
+            <div class="flex items-center space-x-3">
+                <div class="w-10 h-10 rounded-xl btn-gradient flex items-center justify-center">
+                    <i class="fa-solid fa-bolt text-black text-xl"></i>
+                </div>
+                <span class="text-xl font-black uppercase text-white">ZUMBA <span class="fitness-text-gradient">con Angelo</span></span>
+            </div>
+            
+            <div class="flex items-center space-x-4">
+                <!-- Dropdown Campanella Notifiche -->
+                <div class="relative">
+                    <button id="btn-notifications" class="relative p-2.5 bg-brand-dark border border-brand-border rounded-xl text-gray-300 hover:text-white transition focus:outline-none">
+                        <i class="fa-solid fa-bell text-lg"></i>
+                        <!-- Badge Notifiche non lette -->
+                        <span id="notif-badge" class="hidden absolute -top-1 -right-1 bg-brand-pink text-white text-[10px] font-black w-5 h-5 rounded-full flex items-center justify-center border-2 border-brand-dark">0</span>
+                    </button>
+
+                    <!-- Menu a tendina Notifiche -->
+                    <div id="notif-dropdown" class="hidden absolute right-0 mt-2 w-80 sm:w-96 bg-brand-dark border border-brand-border rounded-2xl shadow-2xl z-50 p-4 space-y-3">
+                        <div class="flex justify-between items-center border-b border-brand-border pb-2">
+                            <h4 class="text-xs font-black uppercase text-white tracking-wider">
+                                <i class="fa-solid fa-bell text-brand-cyan mr-1"></i> Notifiche
+                            </h4>
+                            <button onclick="markAllNotificationsAsRead()" class="text-[10px] font-bold text-brand-cyan hover:underline">
+                                Segna tutte come lette
+                            </button>
+                        </div>
+
+                        <div id="notif-list-container" class="max-h-64 overflow-y-auto space-y-2 pr-1">
+                            <p class="text-xs text-gray-500 text-center py-4">Caricamento notifiche...</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Link della Navigazione -->
+                <div id="nav-links" class="flex items-center space-x-3"></div>
+            </div>
+        </div>
+    </nav>
+
+    <!-- MAIN CONTENT -->
+    <main class="flex-grow max-w-7xl w-full mx-auto px-4 py-6 space-y-6">
+        <div class="glass-panel p-6 rounded-3xl flex flex-col md:flex-row items-center justify-between gap-6 border-l-4 border-l-brand-lime">
+            <div class="flex items-center space-x-4">
+                <img id="student-avatar-img" src="https://via.placeholder.com/80" alt="Avatar" class="w-20 h-20 rounded-2xl object-cover border-2 border-brand-lime">
+                <div>
+                    <h2 id="student-welcome" class="text-2xl font-black text-white"></h2>
+                    <p id="student-cert-status" class="text-xs mt-1.5"></p>
+                </div>
+            </div>
+        </div>
+
+        <div class="glass-panel p-6 rounded-3xl">
+            <h3 class="text-lg font-black uppercase tracking-wide text-white mb-6 flex items-center gap-2">
+                <i class="fa-solid fa-calendar-check text-brand-lime"></i> Prossime Lezioni Disponibili
+            </h3>
+            <div id="student-lessons-list" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4"></div>
+        </div>
+
+        <!-- Chat -->
+        <div class="glass-panel p-6 rounded-3xl space-y-4">
+            <div class="flex justify-between items-center border-b border-brand-border pb-3">
+                <h3 class="text-lg font-black uppercase text-white flex items-center gap-2">
+                    <i class="fa-solid fa-comments text-brand-cyan"></i> Community & Chat
+                </h3>
+                <!-- Selettore per passare da Chat di Gruppo a Privata -->
+                <select id="chat-type-select" class="bg-brand-dark border border-brand-border text-white text-xs rounded-xl p-2 font-bold focus:outline-none">
+                    <option value="group">📢 Chat di Gruppo</option>
+                    <option value="private">🔒 Messaggio Privato Istruttore</option>
+                </select>
+            </div>
+        
+            <!-- Area dei Messaggi -->
+            <div id="chat-messages-container" class="h-64 overflow-y-auto space-y-3 p-2 bg-brand-dark/50 rounded-2xl border border-brand-border">
+                <!-- I messaggi verranno caricati dinamicamente -->
+            </div>
+        
+            <!-- Form Invio -->
+            <form id="chat-form" class="flex gap-2">
+                <input type="text" id="chat-input" placeholder="Scrivi un messaggio..." required 
+                    class="flex-grow bg-brand-dark border border-brand-border rounded-xl px-4 py-2.5 text-xs text-white focus:outline-none focus:border-brand-cyan">
+                <button type="submit" class="btn-gradient text-black font-black px-5 py-2.5 rounded-xl text-xs uppercase hover:opacity-90 transition">
+                    <i class="fa-solid fa-paper-plane"></i>
+                </button>
+            </form>
+        </div>
+
+        <!-- Sezione Certificato Medico -->
+        <div class="glass-panel p-6 rounded-3xl space-y-4 border-l-4 border-l-brand-lime">
+            <div class="flex justify-between items-center">
+                <h3 class="text-lg font-black uppercase text-white flex items-center gap-2">
+                    <i class="fa-solid fa-file-medical text-brand-lime"></i> Il Mio Certificato Medico
+                </h3>
+                <span id="cert-status-badge" class="px-3 py-1 text-xs font-black rounded-full uppercase">Caricamento...</span>
+            </div>
+        
+            <form id="form-upload-cert" class="space-y-4">
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-xs font-bold text-gray-400 uppercase mb-1">Data di Scadenza</label>
+                        <input type="date" id="cert-expiration-date" required
+                            class="w-full px-4 py-2.5 bg-brand-dark border border-brand-border rounded-xl text-white text-xs focus:outline-none focus:border-brand-lime">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-bold text-gray-400 uppercase mb-1">File Certificato (PDF/Foto)</label>
+                        <input type="file" id="cert-file-input" accept="image/*,application/pdf" required
+                            class="w-full px-4 py-2 bg-brand-dark border border-brand-border rounded-xl text-white text-xs focus:outline-none focus:border-brand-lime file:mr-4 file:py-1 file:px-3 file:rounded-lg file:border-0 file:text-xs file:font-bold file:bg-brand-lime file:text-black">
+                    </div>
+                </div>
+                <button type="submit" id="btn-upload-cert" class="btn-gradient text-black font-black w-full py-2.5 rounded-xl text-xs uppercase hover:opacity-90 transition">
+                    <i class="fa-solid fa-cloud-arrow-up"></i> Carica Certificato Medico
+                </button>
+            </form>
+        </div>
+        
+    </main>
+
+    <script src="../js/config.js"></script>
+    <script src="../js/notifications.js"></script>
+    <script src="../js/chat.js"></script>
+    <script src="../js/student.js"></script>
+</body>
+</html>

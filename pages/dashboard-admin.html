@@ -1,0 +1,259 @@
+<!DOCTYPE html>
+<html lang="it" class="h-full">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ZUMBA con Angelo | Pannello Istruttore</title>
+
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        brand: { 
+                            lime: '#CCFF00', 
+                            cyan: '#00E5FF', 
+                            pink: '#FF007F', 
+                            dark: '#0B0F19', 
+                            card: '#131927', 
+                            border: '#202A40' 
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+
+    <!-- Librerie Esterne -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="../css/style.css">
+</head>
+<body class="bg-brand-dark text-gray-100 font-sans min-h-screen flex flex-col antialiased">
+
+    <!-- NAVBAR -->
+    <nav class="sticky top-0 z-40 glass-panel border-b border-brand-border">
+        <div class="max-w-7xl mx-auto px-4 py-3.5 flex justify-between items-center">
+            <div class="flex items-center space-x-3">
+                <div class="w-10 h-10 rounded-xl btn-gradient flex items-center justify-center">
+                    <i class="fa-solid fa-bolt text-black text-xl"></i>
+                </div>
+                <span class="text-xl font-black uppercase text-white">ZUMBA <span class="fitness-text-gradient">con Angelo</span></span>
+            </div>
+            <div class="flex items-center space-x-4">
+                <!-- Dropdown Campanella Notifiche -->
+                <div class="relative">
+                    <button id="btn-notifications" class="relative p-2.5 bg-brand-dark border border-brand-border rounded-xl text-gray-300 hover:text-white transition focus:outline-none" aria-label="Notifiche">
+                        <i class="fa-solid fa-bell text-lg"></i>
+                        <span id="notif-badge" class="hidden absolute -top-1 -right-1 bg-brand-pink text-white text-[10px] font-black min-w-5 h-5 px-1 rounded-full flex items-center justify-center border-2 border-brand-dark">0</span>
+                    </button>
+                    <div id="notif-dropdown" class="hidden absolute right-0 mt-2 w-80 sm:w-96 bg-brand-dark border border-brand-border rounded-2xl shadow-2xl z-50 p-4 space-y-3">
+                        <div class="flex justify-between items-center border-b border-brand-border pb-2">
+                            <h4 class="text-xs font-black uppercase text-white tracking-wider">
+                                <i class="fa-solid fa-bell text-brand-cyan mr-1"></i> Notifiche
+                            </h4>
+                            <button onclick="markAllNotificationsAsRead()" class="text-[10px] font-bold text-brand-cyan hover:underline">
+                                Segna tutte come lette
+                            </button>
+                        </div>
+                        <div id="notif-list-container" class="max-h-64 overflow-y-auto space-y-2 pr-1">
+                            <p class="text-xs text-gray-500 text-center py-4">Caricamento notifiche...</p>
+                        </div>
+                    </div>
+                </div>
+                <div id="nav-links" class="flex items-center space-x-3"></div>
+            </div>
+        </div>
+    </nav>
+
+    <!-- MAIN DASHBOARD -->
+    <main class="flex-grow max-w-7xl w-full mx-auto px-4 py-6 space-y-8">
+        
+        <!-- INTESTAZIONE BENVENUTO ISTRUTTORE -->
+        <div class="glass-panel p-6 rounded-3xl flex justify-between items-center border-l-4 border-l-brand-cyan">
+            <div>
+                <h2 id="instructor-welcome-title" class="text-2xl font-black uppercase text-white">Pannello Istruttore</h2>
+                <p class="text-xs text-gray-400">Analisi e gestione dei corsi e delle allieve</p>
+            </div>
+        </div>
+
+        <!-- LISTA LEZIONI E ISCRITTI CON PULSANTE PER CREARE LEZIONE -->
+        <div class="glass-panel p-6 rounded-3xl space-y-4">
+            <div class="flex flex-wrap justify-between items-center gap-3 border-b border-brand-border pb-4">
+                <h3 class="text-lg font-black uppercase text-white flex items-center gap-2">
+                    <i class="fa-solid fa-list-check text-brand-cyan"></i> Programmazione Lezioni &amp; Elenco Iscritti
+                </h3>
+                <button id="btn-open-create-modal" class="px-4 py-2.5 btn-gradient text-black font-black uppercase text-xs rounded-xl shadow-lg hover:opacity-90 transition flex items-center gap-2">
+                    <i class="fa-solid fa-plus text-sm"></i> Nuova Lezione
+                </button>
+            </div>
+            
+            <div id="admin-lessons-container" class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <!-- Popolato da admin.js -->
+            </div>
+        </div>
+
+        <!-- TABELLA ALLIEVE -->
+        <div class="glass-panel p-6 rounded-3xl">
+            <h3 class="text-lg font-black uppercase text-white mb-4">Anagrafica Allieve</h3>
+            <div class="overflow-x-auto">
+                <table class="w-full text-left border-collapse">
+                    <thead>
+                        <tr class="border-b border-brand-border text-xs font-bold text-gray-400 uppercase">
+                            <th class="py-3 px-2">Foto</th>
+                            <th class="py-3 px-2">Allieva</th>
+                            <th class="py-3 px-2">Contatti</th>
+                            <th class="py-3 px-2">Scadenza Cert.</th>
+                            <th class="py-3 px-2">Documento</th>
+                        </tr>
+                    </thead>
+                    <tbody id="table-students-body" class="divide-y divide-brand-border text-sm">
+                        <!-- Popolato da admin.js -->
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- CHAT COMMUNITY & PRIVATA -->
+        <div class="glass-panel p-6 rounded-3xl space-y-4">
+            <div class="flex justify-between items-center border-b border-brand-border pb-3">
+                <h3 class="text-lg font-black uppercase text-white flex items-center gap-2">
+                    <i class="fa-solid fa-comments text-brand-cyan"></i> Community &amp; Chat
+                </h3>
+                <select id="chat-type-select" class="bg-brand-dark border border-brand-border text-white text-xs rounded-xl p-2 font-bold focus:outline-none focus:border-brand-cyan">
+                    <option value="group">📢 Chat di Gruppo</option>
+                    <option value="private">🔒 Messaggio Privato Istruttore</option>
+                </select>
+            </div>
+
+            <!-- SELETTORE ALLIEVA CHAT PRIVATA -->
+            <div id="student-selector-wrapper" class="hidden">
+                <label for="student-private-select" class="block text-xs font-bold text-gray-400 uppercase mb-1">Seleziona Allieva:</label>
+                <select id="student-private-select" class="w-full bg-brand-dark border border-brand-border text-white text-xs rounded-xl p-2.5 font-bold focus:outline-none focus:border-brand-cyan">
+                    <option value="">-- Seleziona un'allieva --</option>
+                </select>
+            </div>
+
+            <div id="chat-messages-container" class="h-64 overflow-y-auto space-y-3 p-3 bg-brand-dark/50 rounded-2xl border border-brand-border">
+                <!-- Messaggi popolati da chat.js -->
+            </div>
+
+            <form id="chat-form" class="flex gap-2">
+                <label for="chat-input" class="sr-only">Scrivi un messaggio</label>
+                <input type="text" id="chat-input" placeholder="Scrivi un messaggio..." required autocomplete="off"
+                    class="flex-grow bg-brand-dark border border-brand-border rounded-xl px-4 py-2.5 text-xs text-white focus:outline-none focus:border-brand-cyan">
+                <button type="submit" class="btn-gradient text-black font-black px-5 py-2.5 rounded-xl text-xs uppercase hover:opacity-90 transition">
+                    <i class="fa-solid fa-paper-plane"></i>
+                </button>
+            </form>
+        </div>
+
+        <!-- GRAFICI ANALYTICS -->
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            <div class="glass-panel p-6 rounded-3xl">
+                <h4 class="text-sm font-bold uppercase text-gray-300 mb-4">Presenze per Sessione</h4>
+                <div class="relative h-64 w-full">
+                    <canvas id="chart-presenze"></canvas>
+                </div>
+            </div>
+            <div class="glass-panel p-6 rounded-3xl">
+                <h4 class="text-sm font-bold uppercase text-gray-300 mb-4">Stato Certificati Medici</h4>
+                <div class="relative h-64 w-full flex justify-center">
+                    <canvas id="chart-certificati"></canvas>
+                </div>
+            </div>
+        </div>
+
+    </main>
+
+    <!-- MODALE PER CREARE NUOVA LEZIONE -->
+    <div id="modal-create-lesson" class="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
+        <div class="bg-brand-card border border-brand-border p-6 rounded-3xl max-w-lg w-full space-y-4 shadow-2xl relative">
+            <div class="flex justify-between items-center border-b border-brand-border pb-3">
+                <h3 class="text-lg font-black uppercase text-white flex items-center gap-2">
+                    <i class="fa-solid fa-calendar-plus text-brand-lime"></i> Programma Nuova Lezione
+                </h3>
+                <button id="btn-close-modal" class="text-gray-400 hover:text-white text-xl">
+                    <i class="fa-solid fa-xmark"></i>
+                </button>
+            </div>
+            
+            <form id="form-create-lesson" class="space-y-4">
+                <div>
+                    <label for="lesson-title" class="block text-xs font-bold text-gray-400 uppercase mb-1">Titolo Lezione</label>
+                    <input type="text" id="lesson-title" placeholder="Es. Zumba Fitness / Toning" required 
+                        class="w-full px-4 py-3 bg-brand-dark border border-brand-border rounded-xl text-white text-sm focus:outline-none focus:border-brand-cyan">
+                </div>
+                <div>
+                    <label for="lesson-datetime" class="block text-xs font-bold text-gray-400 uppercase mb-1">Data e Ora Lezione</label>
+                    <input type="datetime-local" id="lesson-datetime" required 
+                        class="w-full px-4 py-3 bg-brand-dark border border-brand-border rounded-xl text-white text-sm focus:outline-none focus:border-brand-cyan">
+                </div>
+                <div>
+                    <label for="lesson-capacity" class="block text-xs font-bold text-gray-400 uppercase mb-1">Capienza Massima</label>
+                    <input type="number" id="lesson-capacity" value="20" min="1" required 
+                        class="w-full px-4 py-3 bg-brand-dark border border-brand-border rounded-xl text-white text-sm focus:outline-none focus:border-brand-cyan">
+                </div>
+                <div class="flex justify-end gap-3 pt-2">
+                    <button type="button" id="btn-cancel-modal" class="px-4 py-2.5 bg-brand-dark border border-brand-border text-gray-300 rounded-xl text-xs font-bold uppercase hover:bg-white/5 transition">
+                        Annulla
+                    </button>
+                    <button type="submit" class="px-5 py-2.5 btn-gradient text-black font-black uppercase text-xs rounded-xl shadow-lg hover:opacity-90 transition">
+                        Pubblica Lezione
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- MODALE PER MODIFICARE LEZIONE -->
+    <div id="modal-edit-lesson" class="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
+        <div class="bg-brand-card border border-brand-border p-6 rounded-3xl max-w-lg w-full space-y-4 shadow-2xl relative">
+            <div class="flex justify-between items-center border-b border-brand-border pb-3">
+                <h3 class="text-lg font-black uppercase text-white flex items-center gap-2">
+                    <i class="fa-solid fa-pen-to-square text-brand-cyan"></i> Modifica Lezione
+                </h3>
+                <button id="btn-close-edit-modal" class="text-gray-400 hover:text-white text-xl">
+                    <i class="fa-solid fa-xmark"></i>
+                </button>
+            </div>
+            
+            <form id="form-edit-lesson" class="space-y-4">
+                <input type="hidden" id="edit-lesson-id">
+                <div>
+                    <label for="edit-lesson-title" class="block text-xs font-bold text-gray-400 uppercase mb-1">Titolo Lezione</label>
+                    <input type="text" id="edit-lesson-title" required 
+                        class="w-full px-4 py-3 bg-brand-dark border border-brand-border rounded-xl text-white text-sm focus:outline-none focus:border-brand-cyan">
+                </div>
+                <div>
+                    <label for="edit-lesson-datetime" class="block text-xs font-bold text-gray-400 uppercase mb-1">Data e Ora Lezione</label>
+                    <input type="datetime-local" id="edit-lesson-datetime" required 
+                        class="w-full px-4 py-3 bg-brand-dark border border-brand-border rounded-xl text-white text-sm focus:outline-none focus:border-brand-cyan">
+                </div>
+                <div>
+                    <label for="edit-lesson-capacity" class="block text-xs font-bold text-gray-400 uppercase mb-1">Capienza Massima</label>
+                    <input type="number" id="edit-lesson-capacity" min="1" required 
+                        class="w-full px-4 py-3 bg-brand-dark border border-brand-border rounded-xl text-white text-sm focus:outline-none focus:border-brand-cyan">
+                </div>
+                <div class="flex justify-end gap-3 pt-2">
+                    <button type="button" id="btn-cancel-edit-modal" class="px-4 py-2.5 bg-brand-dark border border-brand-border text-gray-300 rounded-xl text-xs font-bold uppercase hover:bg-white/5 transition">
+                        Annulla
+                    </button>
+                    <button type="submit" class="px-5 py-2.5 bg-brand-cyan text-black font-black uppercase text-xs rounded-xl shadow-lg hover:opacity-90 transition">
+                        Salva Modifiche
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- SCRIPT APPLICATION LOGIC -->
+    <script src="../js/config.js"></script>
+    <script src="../js/notifications.js"></script>
+    <script src="../js/chat.js"></script>
+    <script src="../js/admin.js"></script>
+</body>
+</html>
