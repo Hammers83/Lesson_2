@@ -47,17 +47,65 @@ function fillPlaylistTrackBuilder(tracksContainer, tracks) {
     });
 }
 
+async function preprocessPlaylistPhoto(file, mode = 'normal') {
+    const bitmap = await createImageBitmap(file);
+    const scale = Math.max(1, Math.min(2.5, 1800 / Math.max(bitmap.width, bitmap.height)));
+    const canvas = document.createElement('canvas');
+    canvas.width = Math.round(bitmap.width * scale);
+    canvas.height = Math.round(bitmap.height * scale);
+    const ctx = canvas.getContext('2d', { willReadFrequently: true });
+    ctx.drawImage(bitmap, 0, 0, canvas.width, canvas.height);
+    const image = ctx.getImageData(0, 0, canvas.width, canvas.height);
+    const d = image.data;
+    for (let i = 0; i < d.length; i += 4) {
+        const gray = 0.299 * d[i] + 0.587 * d[i + 1] + 0.114 * d[i + 2];
+        let value = gray;
+        if (mode === 'contrast') {
+            value = Math.max(0, Math.min(255, (gray - 128) * 1.65 + 128));
+        } else if (mode === 'threshold') {
+            value = gray > 155 ? 255 : 0;
+        }
+        d[i] = d[i + 1] = d[i + 2] = value;
+    }
+    ctx.putImageData(image, 0, 0);
+    return canvas;
+}
+
 async function recognizePlaylistPhoto(file, statusEl) {
     if (!window.Tesseract) throw new Error('OCR non disponibile. Ricarica la pagina e riprova.');
-    if (statusEl) statusEl.textContent = 'Lettura della foto in corso...';
-    const result = await Tesseract.recognize(file, 'ita+eng', {
-        logger: message => {
-            if (!statusEl || !message?.status) return;
-            const progress = typeof message.progress === 'number' ? Math.round(message.progress * 100) : 0;
-            statusEl.textContent = progress ? 'Lettura foto: ' + progress + '%' : 'Lettura della foto in corso...';
-        }
-    });
-    return result?.data?.text || '';
+    if (!file?.type?.startsWith('image/')) throw new Error('Seleziona una foto JPG, PNG o WEBP.');
+    if (file.size > 12 * 1024 * 1024) throw new Error('La foto è troppo grande. Usa un’immagine sotto i 12 MB.');
+
+    const passes = [
+        { mode: 'normal', psm: 6, label: 'foto' },
+        { mode: 'contrast', psm: 6, label: 'contrasto' },
+        { mode: 'threshold', psm: 11, label: 'pulita' }
+    ];
+    const results = [];
+
+    for (let i = 0; i < passes.length; i++) {
+        const pass = passes[i];
+        if (statusEl) statusEl.textContent = 'Lettura ' + pass.label + ' (' + (i + 1) + '/' + passes.length + ')...';
+        const image = await preprocessPlaylistPhoto(file, pass.mode);
+        const result = await Tesseract.recognize(image, 'ita+eng', {
+            config: { tessedit_pageseg_mode: String(pass.psm) },
+            logger: message => {
+                if (!statusEl || !message?.status || typeof message.progress !== 'number') return;
+                const progress = Math.round(((i + message.progress) / passes.length) * 100);
+                statusEl.textContent = 'Lettura foto: ' + progress + '%';
+            }
+        });
+        const text = result?.data?.text || '';
+        if (text.trim()) results.push(text);
+    }
+
+    if (!results.length) return '';
+    // Preferisce il passaggio che produce più righe utili: per liste scritte a mano
+    // tende a conservare meglio separazioni tra brani.
+    return results.sort((a, b) => {
+        const score = text => text.split(/\\r?\\n/).filter(line => line.trim()).length * 3 + Math.min(text.length, 500) / 100;
+        return score(b) - score(a);
+    })[0];
 }
 
 
