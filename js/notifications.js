@@ -127,6 +127,13 @@ async function loadNotifications(userId) {
     }).join('');
 }
 
+// Compatibilità con la chat: aggiorna la campanella notifiche.
+window.updateNotificationBadge = async function(userId = null) {
+    const id = userId || window.notificationState?.userId || window.currentSessionData?.user?.id || window.currentUserProfile?.id;
+    if (!id) return;
+    await loadNotifications(id);
+};
+
 async function createNotification(userId, title, message, type = 'info') {
     const sb = notificationClient();
     if (!sb || !userId) {
