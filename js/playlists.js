@@ -342,7 +342,6 @@ function initPlaylistEditModal(userId) {
         try { await loadLessons(); lessonSelect.value=playlist.lesson_id || ''; } catch(error) { console.error(error); alert('Impossibile caricare le lezioni: '+error.message); }
     };
 }
-}
 async function loadStudentPlaylists() {
     const container = document.getElementById('student-playlists-container');
     if (!container) return;
