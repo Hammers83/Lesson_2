@@ -69,7 +69,6 @@
     <main class="flex-grow max-w-7xl w-full mx-auto px-4 py-6 space-y-6">
         <div class="glass-panel p-6 rounded-3xl flex flex-col md:flex-row items-center justify-between gap-6 border-l-4 border-l-brand-lime">
             <div class="flex items-center space-x-4">
-                <img id="student-avatar-img" src="https://via.placeholder.com/80" alt="Avatar" class="w-20 h-20 rounded-2xl object-cover border-2 border-brand-lime">
                 <div>
                     <h2 id="student-welcome" class="text-2xl font-black text-white"></h2>
                     <p id="student-cert-status" class="text-xs mt-1.5"></p>
@@ -87,6 +86,19 @@
                 <i class="fa-solid fa-calendar-check text-brand-lime"></i> Prossime Lezioni Disponibili
             </h3>
             <div id="student-lessons-list" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4"></div>
+        </div>
+
+        <!-- PLAYLIST DELLE LEZIONI -->
+        <div class="glass-panel p-6 rounded-3xl space-y-4 border-l-4 border-l-brand-cyan">
+            <div class="flex flex-wrap justify-between items-center gap-3 border-b border-brand-border pb-3">
+                <h3 class="text-lg font-black uppercase text-white flex items-center gap-2">
+                    <i class="fa-solid fa-music text-brand-cyan"></i> Playlist delle lezioni
+                </h3>
+                <span class="text-[10px] text-gray-500 uppercase font-bold">Ascolta o scarica i file caricati dall'istruttore</span>
+            </div>
+            <div id="student-playlists-container" class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <p class="text-xs text-gray-500 italic">Caricamento playlist...</p>
+            </div>
         </div>
 
         <!-- Chat -->
@@ -150,6 +162,7 @@
     <script src="../js/config.js"></script>
     <script src="../js/notifications.js"></script>
     <script src="../js/chat.js"></script>
+    <script src="../js/playlists.js"></script>
     <script src="../js/student.js"></script>
 </body>
 </html>

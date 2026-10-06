@@ -27,7 +27,12 @@ document.addEventListener('DOMContentLoaded', async () => {
     // 5. Carica la lista delle lezioni
     await loadAvailableLessons(authData.user.id, authData.profile);
 
-    // 6. Inizializza la chat per l'allieva
+    // 6. Carica le playlist associate alle lezioni
+    if (typeof loadStudentPlaylists === 'function') {
+        await loadStudentPlaylists();
+    }
+
+    // 7. Inizializza la chat per l'allieva
     if (typeof initChat === 'function') {
         await initChat(authData.profile);
     }
@@ -48,7 +53,6 @@ window.addEventListener('profile-avatar-updated', (event) => {
     const profile = event.detail;
     if (!profile) return;
     if (typeof setAvatarImage === 'function') {
-        setAvatarImage(document.getElementById('student-avatar-img'), profile);
         setAvatarImage(document.getElementById('nav-avatar-img'), profile);
     }
 });
@@ -57,14 +61,8 @@ window.addEventListener('profile-avatar-updated', (event) => {
 function renderStudentProfile(profile) {
     const welcomeEl = document.getElementById('student-welcome');
     const certStatusEl = document.getElementById('student-cert-status');
-    const avatarEl = document.getElementById('student-avatar-img');
-
     if (welcomeEl) {
         welcomeEl.innerText = `Ciao, ${profile.nome || 'Allieva'}!`;
-    }
-
-    if (avatarEl && typeof setAvatarImage === 'function') {
-        setAvatarImage(avatarEl, profile);
     }
 
     if (certStatusEl) {

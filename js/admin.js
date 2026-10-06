@@ -56,6 +56,14 @@ document.addEventListener('DOMContentLoaded', async () => {
     }
 
     await loadAdminDashboard();
+
+    // Gestione playlist delle lezioni
+    if (typeof initPlaylistAdminForm === 'function') {
+        initPlaylistAdminForm(currentSessionData.user.id);
+    }
+    if (typeof loadAdminPlaylistsSection === 'function') {
+        await loadAdminPlaylistsSection();
+    }
     
     // Inizializza la chat per l'admin
     if (typeof initChat === 'function') {

@@ -19,7 +19,7 @@
     border: 1px solid rgba(255, 255, 255, 0.08);
 }
 
-/* Immagine personale di sfondo - elemento decorativo, senza interferire con l'interfaccia */
+/* Immagine personale di sfondo: grande, centrale e discreta, senza modificare la palette del sito */
 body {
     position: relative;
     isolation: isolate;
@@ -31,14 +31,14 @@ body::before {
     position: fixed;
     z-index: -2;
     pointer-events: none;
-    width: min(72vw, 980px);
-    height: min(72vw, 820px);
-    right: -4vw;
+    width: min(92vw, 1320px);
+    height: min(92vh, 940px);
+    left: 50%;
     top: 50%;
-    transform: translateY(-50%);
+    transform: translate(-50%, -50%);
     background: url('../assets/angelo-sticker.png') center / contain no-repeat;
-    opacity: 0.115;
-    filter: saturate(0.9) contrast(0.92);
+    opacity: 0.22;
+    filter: saturate(0.9) contrast(0.94);
 }
 
 body::after {
@@ -48,16 +48,17 @@ body::after {
     z-index: -1;
     pointer-events: none;
     background:
-        radial-gradient(circle at 82% 48%, rgba(0, 229, 255, 0.055), transparent 38%),
-        linear-gradient(90deg, rgba(11, 15, 25, 0.18) 0%, rgba(11, 15, 25, 0.02) 48%, rgba(11, 15, 25, 0.18) 100%);
+        radial-gradient(circle at 50% 50%, rgba(11, 15, 25, 0.05), rgba(11, 15, 25, 0.32) 72%),
+        linear-gradient(90deg, rgba(11, 15, 25, 0.22) 0%, rgba(11, 15, 25, 0.02) 50%, rgba(11, 15, 25, 0.22) 100%);
 }
 
 @media (max-width: 768px) {
     body::before {
         width: 125vw;
-        height: 78vh;
-        right: -38vw;
+        height: 80vh;
+        left: 50%;
         top: 52%;
-        opacity: 0.075;
+        transform: translate(-50%, -50%);
+        opacity: 0.16;
     }
 }
