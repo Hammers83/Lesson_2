@@ -91,9 +91,9 @@
                 <h3 class="text-lg font-black uppercase text-white flex items-center gap-2">
                     <i class="fa-solid fa-music text-brand-cyan"></i> Playlist delle lezioni
                 </h3>
-                <p class="text-xs text-gray-500 mt-1">Carica una playlist audio, M3U/M3U8, TXT o ZIP e associala a una lezione.</p>
+                <p class="text-xs text-gray-500 mt-1">Crea una playlist testuale direttamente qui oppure carica un file audio/M3U/TXT/ZIP.</p>
             </div>
-            <form id="form-upload-playlist" class="grid grid-cols-1 md:grid-cols-4 gap-3 items-end">
+            <form id="form-upload-playlist" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-3 items-end">
                 <div class="md:col-span-1">
                     <label for="playlist-lesson-id" class="block text-xs font-bold text-gray-400 uppercase mb-1">Lezione</label>
                     <select id="playlist-lesson-id" required class="w-full px-3 py-2.5 bg-brand-dark border border-brand-border rounded-xl text-white text-xs focus:outline-none focus:border-brand-cyan">
@@ -101,12 +101,23 @@
                     </select>
                 </div>
                 <div>
+                    <label for="playlist-type" class="block text-xs font-bold text-gray-400 uppercase mb-1">Tipo</label>
+                    <select id="playlist-type" class="w-full px-3 py-2.5 bg-brand-dark border border-brand-border rounded-xl text-white text-xs focus:outline-none focus:border-brand-cyan">
+                        <option value="text">Playlist testuale</option>
+                        <option value="file">File</option>
+                    </select>
+                </div>
+                <div>
                     <label for="playlist-title" class="block text-xs font-bold text-gray-400 uppercase mb-1">Nome Playlist</label>
                     <input id="playlist-title" type="text" required placeholder="Es. Zumba Monday Mix" class="w-full px-3 py-2.5 bg-brand-dark border border-brand-border rounded-xl text-white text-xs focus:outline-none focus:border-brand-cyan">
                 </div>
-                <div>
+                <div id="playlist-content-field" class="lg:col-span-2">
+                    <label for="playlist-content" class="block text-xs font-bold text-gray-400 uppercase mb-1">Elenco brani</label>
+                    <textarea id="playlist-content" rows="3" placeholder="1. Titolo brano - Artista&#10;2. Titolo brano - Artista&#10;3. Titolo brano - Artista" class="w-full px-3 py-2.5 bg-brand-dark border border-brand-border rounded-xl text-white text-xs focus:outline-none focus:border-brand-cyan resize-y"></textarea>
+                </div>
+                <div id="playlist-file-field" class="hidden">
                     <label for="playlist-file" class="block text-xs font-bold text-gray-400 uppercase mb-1">File (max 50 MB)</label>
-                    <input id="playlist-file" type="file" required accept=".mp3,.wav,.m4a,.aac,.ogg,.m3u,.m3u8,.txt,.zip" class="w-full px-2 py-2 bg-brand-dark border border-brand-border rounded-xl text-white text-[10px] focus:outline-none focus:border-brand-cyan file:mr-2 file:py-1 file:px-2 file:rounded-lg file:border-0 file:text-[10px] file:font-bold file:bg-brand-cyan file:text-black">
+                    <input id="playlist-file" type="file" accept=".mp3,.wav,.m4a,.aac,.ogg,.m3u,.m3u8,.txt,.zip" class="w-full px-2 py-2 bg-brand-dark border border-brand-border rounded-xl text-white text-[10px] focus:outline-none focus:border-brand-cyan file:mr-2 file:py-1 file:px-2 file:rounded-lg file:border-0 file:text-[10px] file:font-bold file:bg-brand-cyan file:text-black">
                 </div>
                 <button id="btn-upload-playlist" type="submit" class="btn-gradient text-black font-black px-4 py-2.5 rounded-xl text-xs uppercase hover:opacity-90 transition">
                     <i class="fa-solid fa-cloud-arrow-up"></i> Carica Playlist
