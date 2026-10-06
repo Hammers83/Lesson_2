@@ -74,10 +74,22 @@ async function uploadProfileAvatar(file, profile) {
         throw new Error('Formato non supportato. Usa JPG, PNG, WEBP o GIF.');
     }
     if (file.size > 5 * 1024 * 1024) {
-        throw new Error('L\'immagine è troppo grande. Il limite è 5 MB.');
+        throw new Error('L'immagine è troppo grande. Il limite è 5 MB.');
     }
 
     const sb = window.supabaseClient;
+    const { data: sessionData, error: sessionError } = await sb.auth.getSession();
+    if (sessionError) throw new Error('Impossibile verificare la sessione utente.');
+    const authUser = sessionData?.session?.user;
+
+    if (!authUser?.id) {
+        throw new Error('Sessione non valida. Effettua nuovamente il login.');
+    }
+
+    // Storage RLS autorizza il percorso in base a auth.uid(), quindi
+    // usiamo sempre l'ID dell'utente autenticato come prima cartella.
+    const userId = authUser.id;
+
     const extensionMap = {
         'image/jpeg': 'jpg',
         'image/png': 'png',
@@ -85,31 +97,36 @@ async function uploadProfileAvatar(file, profile) {
         'image/gif': 'gif'
     };
     const extension = extensionMap[file.type] || 'jpg';
-    const path = `${profile.id}/avatar.${extension}`;
+    const path = `${userId}/avatar.${extension}`;
 
     // Elimina eventuali vecchie estensioni per evitare di lasciare file inutilizzati.
     const oldPaths = ['jpg', 'png', 'webp', 'gif']
-        .map(ext => `${profile.id}/avatar.${ext}`)
+        .map(ext => `${userId}/avatar.${ext}`)
         .filter(oldPath => oldPath !== path);
     await sb.storage.from(AVATAR_BUCKET).remove(oldPaths).catch(() => {});
 
     const { error: uploadError } = await sb.storage
         .from(AVATAR_BUCKET)
-        .upload(path, file, { upsert: true, contentType: file.type, cacheControl: '3600' });
+        .upload(path, file, {
+            upsert: true,
+            contentType: file.type,
+            cacheControl: '3600'
+        });
 
     if (uploadError) {
         throw new Error(`Impossibile caricare l'immagine: ${uploadError.message}`);
     }
 
     const { data } = sb.storage.from(AVATAR_BUCKET).getPublicUrl(path);
-    if (!data?.publicUrl) throw new Error('URL dell\'immagine non disponibile.');
+    if (!data?.publicUrl) throw new Error("URL dell'immagine non disponibile.");
 
-    // Query-string per evitare che il browser mostri una vecchia immagine in cache.
+    // Il profilo appartiene all'utente autenticato: aggiorniamo usando auth.uid()
+    // invece di fidarci di un profile.id eventualmente non sincronizzato.
     const avatarUrl = `${data.publicUrl}?v=${Date.now()}`;
     const { data: updatedProfile, error: updateError } = await sb
         .from('profiles')
         .update({ avatar_url: avatarUrl })
-        .eq('id', profile.id)
+        .eq('id', userId)
         .select('*')
         .single();
 
@@ -119,7 +136,6 @@ async function uploadProfileAvatar(file, profile) {
 
     return updatedProfile;
 }
-
 async function removeProfileAvatar(profile) {
     if (!profile?.id) throw new Error('Profilo non valido.');
     const sb = window.supabaseClient;
