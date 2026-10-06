@@ -244,6 +244,7 @@ function initPlaylistEditModal(userId) {
     const addTrackBtn = document.getElementById('btn-add-edit-playlist-track');
     const typeLabel = document.getElementById('edit-playlist-type-label');
     const fileNotice = document.getElementById('edit-playlist-file-notice');
+    const builder = document.getElementById('edit-playlist-builder');
     const closeBtn = document.getElementById('btn-close-edit-playlist');
     const cancelBtn = document.getElementById('btn-cancel-edit-playlist');
     const submitBtn = document.getElementById('btn-save-edit-playlist');
@@ -332,9 +333,11 @@ function initPlaylistEditModal(userId) {
             fileNotice.textContent='Questa playlist usa il vecchio formato testuale. La modifica verrà salvata come elenco brani strutturato.';
             addTrack({title: parsed.legacyText});
         } else {
+            builder.classList.add('hidden');
             fileNotice.classList.remove('hidden');
             fileNotice.textContent='Questa è una playlist caricata come file. Puoi modificare nome e lezione; il file esistente resterà invariato.';
         }
+        if (structured || playlist.content) builder.classList.remove('hidden');
         modal.classList.remove('hidden');
         try { await loadLessons(); lessonSelect.value=playlist.lesson_id || ''; } catch(error) { console.error(error); alert('Impossibile caricare le lezioni: '+error.message); }
     };
