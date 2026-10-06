@@ -302,7 +302,7 @@ function initPlaylistEditModal(userId) {
         submitBtn.disabled=true; submitBtn.innerHTML='<i class="fa-solid fa-spinner fa-spin"></i> Salvataggio...';
         try {
             const parsed=parsePlaylistContent(currentPlaylist.content);
-            const content=parsed.tracks.length ? JSON.stringify({version:1,tracks}) : (parsed.legacyText ? tracks.map(t=>[t.title,t.artist,t.url].filter(Boolean).join(' — ')).join('\n') : null);
+            const content=(parsed.tracks.length || parsed.legacyText) ? JSON.stringify({version:1,tracks}) : null;
             await updateLessonPlaylist({id:currentPlaylist.id,lessonId:lessonSelect.value,title:titleInput.value,content,userId});
             close();
             await loadAdminPlaylistsSection();
