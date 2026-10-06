@@ -5,10 +5,11 @@ create table if not exists public.lesson_playlists (
     id uuid primary key default gen_random_uuid(),
     lesson_id uuid not null references public.lessons(id) on delete cascade,
     title text not null,
-    file_path text not null,
-    file_name text not null,
+    file_path text,
+    file_name text,
     file_type text,
     file_url text,
+    content text,
     uploaded_by uuid not null references public.profiles(id) on delete cascade,
     created_at timestamptz not null default now()
 );
@@ -68,3 +69,14 @@ using (
     and exists (select 1 from public.profiles p where p.id = auth.uid() and p.is_admin = true)
     and (storage.foldername(name))[1] = auth.uid()::text
 );
+
+
+-- Migrazione per installazioni esistenti: consente playlist solo testuali.
+alter table public.lesson_playlists
+    alter column file_path drop not null;
+
+alter table public.lesson_playlists
+    alter column file_name drop not null;
+
+alter table public.lesson_playlists
+    add column if not exists content text;
