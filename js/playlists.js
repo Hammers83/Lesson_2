@@ -66,7 +66,7 @@ async function uploadLessonPlaylist({ lessonId, title, file = null, content = ''
     }]).select().single();
 
     if (dbError) {
-        await sb.storage.from(PLAYLIST_BUCKET).remove([path]).catch(() => {});
+        if (path) await sb.storage.from(PLAYLIST_BUCKET).remove([path]).catch(() => {});
         throw dbError;
     }
     return data;
@@ -135,10 +135,32 @@ function renderPlaylistItems(playlists, lessonMap = {}, options = {}) {
             '<span class="shrink-0 text-[9px] uppercase font-black px-2 py-1 rounded-full bg-brand-lime/10 text-brand-lime border border-brand-lime/30">' + (isStructured ? 'Playlist' : getPlaylistFileLabel(p.file_name || '')) + '</span></div>' +
             tracksHtml + (audio ? '<audio controls preload="none" class="w-full h-9" src="' + playlistEscapeHtml(p.file_url) + '"></audio>' : '') +
             '<div class="flex gap-2">' + (!isText ? '<a href="' + playlistEscapeHtml(p.file_url) + '" target="_blank" rel="noopener" class="flex-1 text-center px-3 py-2 bg-brand-dark border border-brand-cyan/40 text-brand-cyan rounded-xl text-[10px] font-black uppercase"><i class="fa-solid fa-arrow-up-right-from-square mr-1"></i> ' + (audio ? 'Apri' : 'Apri / Scarica') + '</a>' : '<div class="flex-1 text-center px-3 py-2 bg-brand-dark border border-brand-border text-brand-cyan rounded-xl text-[10px] font-black uppercase"><i class="fa-solid fa-eye mr-1"></i> Visibile online</div>') +
-            (admin ? '<button type="button" onclick="deletePlaylistById(\'' + p.id + '\')" class="px-3 py-2 bg-brand-pink/10 border border-brand-pink/30 text-brand-pink rounded-xl text-[10px] font-black uppercase"><i class="fa-solid fa-trash"></i></button>' : '') +
+            (admin ? '<button type="button" onclick="editPlaylistById(\'' + p.id + '\')" class="px-3 py-2 bg-brand-cyan/10 border border-brand-cyan/30 text-brand-cyan rounded-xl text-[10px] font-black uppercase"><i class="fa-solid fa-pen"></i></button><button type="button" onclick="deletePlaylistById(\'' + p.id + '\')" class="px-3 py-2 bg-brand-pink/10 border border-brand-pink/30 text-brand-pink rounded-xl text-[10px] font-black uppercase"><i class="fa-solid fa-trash"></i></button>' : '') +
             '</div></div>';
     }).join('');
 }
+window.editPlaylistById = function(id) {
+    const playlist = window.adminPlaylistsData?.find(p => p.id === id);
+    if (!playlist) return;
+    if (typeof window.openPlaylistEditModal === 'function') window.openPlaylistEditModal(playlist);
+};
+
+async function updateLessonPlaylist({ id, lessonId, title, content, userId }) {
+    if (!id || !lessonId || !title || !userId) throw new Error('Dati playlist incompleti.');
+    const sb = getSupabase();
+    const { data, error } = await sb.from('lesson_playlists')
+        .update({
+            lesson_id: lessonId,
+            title: title.trim(),
+            content: content || null
+        })
+        .eq('id', id)
+        .select()
+        .single();
+    if (error) throw error;
+    return data;
+}
+
 window.deletePlaylistById = async function(id) {
     if (!window.adminPlaylistsData) return;
     const playlist = window.adminPlaylistsData.find(p => p.id === id);
@@ -210,6 +232,113 @@ function initPlaylistAdminForm(userId) {
         try { await uploadLessonPlaylist({lessonId:lessonSelect.value,title:titleInput.value,file:text?null:file,content:text?JSON.stringify({version:1,tracks}):'',userId}); form.reset(); tracksContainer.innerHTML=''; addTrack(); syncMode(); await loadAdminPlaylistsSection(); alert('Playlist salvata con successo!'); }
         catch(error){console.error(error);alert('Errore durante il salvataggio: '+error.message);} finally {btn.disabled=false;btn.innerHTML='<i class="fa-solid fa-floppy-disk"></i> Salva Playlist';}
     };
+}
+
+/* Modifica playlist esistente */
+function initPlaylistEditModal(userId) {
+    const modal = document.getElementById('modal-edit-playlist');
+    const form = document.getElementById('form-edit-playlist');
+    const lessonSelect = document.getElementById('edit-playlist-lesson-id');
+    const titleInput = document.getElementById('edit-playlist-title');
+    const tracksContainer = document.getElementById('edit-playlist-tracks');
+    const addTrackBtn = document.getElementById('btn-add-edit-playlist-track');
+    const typeLabel = document.getElementById('edit-playlist-type-label');
+    const fileNotice = document.getElementById('edit-playlist-file-notice');
+    const closeBtn = document.getElementById('btn-close-edit-playlist');
+    const cancelBtn = document.getElementById('btn-cancel-edit-playlist');
+    const submitBtn = document.getElementById('btn-save-edit-playlist');
+    if (!modal || !form || !lessonSelect || !titleInput || !tracksContainer) return;
+
+    let currentPlaylist = null;
+
+    const close = () => modal.classList.add('hidden');
+    closeBtn?.addEventListener('click', close);
+    cancelBtn?.addEventListener('click', close);
+    modal.addEventListener('click', e => { if (e.target === modal) close(); });
+
+    const refreshNumbers = () => [...tracksContainer.children].forEach((row, i) => {
+        const n = row.querySelector('.edit-track-number');
+        if (n) n.textContent = i + 1;
+    });
+
+    const addTrack = (track = {}) => {
+        const row = document.createElement('div');
+        row.className = 'edit-playlist-track-row grid grid-cols-1 sm:grid-cols-[auto_1fr_1fr_1.2fr_auto] gap-2 items-center bg-brand-dark/60 border border-brand-border rounded-xl p-2';
+        const n = document.createElement('span'); n.className = 'edit-track-number w-7 h-7 rounded-lg bg-brand-cyan/10 text-brand-cyan flex items-center justify-center text-[10px] font-black';
+        const title = document.createElement('input'); title.type='text'; title.dataset.field='title'; title.placeholder='Titolo brano'; title.value=track.title || ''; title.className='w-full px-3 py-2 bg-brand-dark border border-brand-border rounded-lg text-white text-xs focus:outline-none focus:border-brand-cyan';
+        const artist = document.createElement('input'); artist.type='text'; artist.dataset.field='artist'; artist.placeholder='Artista'; artist.value=track.artist || ''; artist.className=title.className;
+        const url = document.createElement('input'); url.type='url'; url.dataset.field='url'; url.placeholder='Link YouTube / Spotify (opzionale)'; url.value=track.url || ''; url.className=title.className;
+        const actions = document.createElement('div'); actions.className='flex gap-1 justify-end';
+        [['up','fa-chevron-up'],['down','fa-chevron-down'],['remove','fa-trash']].forEach(item => {
+            const b=document.createElement('button'); b.type='button'; b.dataset.action=item[0]; b.className='px-2 py-2 rounded-lg bg-white/5 text-gray-300 hover:text-white'; b.innerHTML='<i class="fa-solid '+item[1]+'"></i>'; actions.appendChild(b);
+        });
+        row.append(n,title,artist,url,actions); tracksContainer.appendChild(row); refreshNumbers();
+    };
+
+    const loadLessons = async () => {
+        const {data,error}=await getSupabase().from('lessons').select('id,title,datetime').order('datetime',{ascending:true});
+        if(error) throw error;
+        lessonSelect.innerHTML='<option value="">-- Seleziona una lezione --</option>'+(data||[]).map(l=>'<option value="'+l.id+'">'+playlistEscapeHtml(l.title)+' · '+new Date(l.datetime).toLocaleString('it-IT',{day:'2-digit',month:'2-digit',hour:'2-digit',minute:'2-digit'})+'</option>').join('');
+    };
+
+    tracksContainer.addEventListener('click', e => {
+        const b=e.target.closest('button[data-action]'); if(!b)return;
+        const row=b.closest('.edit-playlist-track-row'); if(!row)return;
+        if(b.dataset.action==='remove') row.remove();
+        if(b.dataset.action==='up'&&row.previousElementSibling) row.parentElement.insertBefore(row,row.previousElementSibling);
+        if(b.dataset.action==='down'&&row.nextElementSibling) row.parentElement.insertBefore(row.nextElementSibling,row);
+        refreshNumbers();
+    });
+    addTrackBtn?.addEventListener('click', () => addTrack());
+
+    form.addEventListener('submit', async e => {
+        e.preventDefault();
+        if (!currentPlaylist) return;
+        const tracks=[...tracksContainer.querySelectorAll('.edit-playlist-track-row')]
+            .map(r=>({title:r.querySelector('[data-field="title"]').value.trim(),artist:r.querySelector('[data-field="artist"]').value.trim(),url:r.querySelector('[data-field="url"]').value.trim()}))
+            .filter(t=>t.title||t.artist);
+        if(!lessonSelect.value || !titleInput.value.trim()) { alert('Compila lezione e nome playlist.'); return; }
+        if(currentPlaylist.content && parsePlaylistContent(currentPlaylist.content).tracks.length && !tracks.length) { alert('La playlist deve contenere almeno un brano.'); return; }
+        submitBtn.disabled=true; submitBtn.innerHTML='<i class="fa-solid fa-spinner fa-spin"></i> Salvataggio...';
+        try {
+            const parsed=parsePlaylistContent(currentPlaylist.content);
+            const content=parsed.tracks.length ? JSON.stringify({version:1,tracks}) : (parsed.legacyText ? tracks.map(t=>[t.title,t.artist,t.url].filter(Boolean).join(' — ')).join('\n') : null);
+            await updateLessonPlaylist({id:currentPlaylist.id,lessonId:lessonSelect.value,title:titleInput.value,content,userId});
+            close();
+            await loadAdminPlaylistsSection();
+            alert('Playlist modificata con successo!');
+        } catch(error) {
+            console.error(error);
+            alert('Errore durante la modifica: '+error.message);
+        } finally {
+            submitBtn.disabled=false; submitBtn.innerHTML='<i class="fa-solid fa-floppy-disk"></i> Salva Modifiche';
+        }
+    });
+
+    window.openPlaylistEditModal = async function(playlist) {
+        currentPlaylist=playlist;
+        titleInput.value=playlist.title || '';
+        lessonSelect.value=playlist.lesson_id || '';
+        tracksContainer.innerHTML='';
+        const parsed=parsePlaylistContent(playlist.content);
+        const structured=parsed.tracks.length>0;
+        typeLabel.textContent=structured ? 'Playlist testuale' : (playlist.content ? 'Testo libero' : 'File');
+        if (structured) {
+            fileNotice.classList.add('hidden');
+            parsed.tracks.forEach(addTrack);
+            if (!parsed.tracks.length) addTrack();
+        } else if (playlist.content) {
+            fileNotice.classList.remove('hidden');
+            fileNotice.textContent='Questa playlist usa il vecchio formato testuale. La modifica verrà salvata come elenco brani strutturato.';
+            addTrack({title: parsed.legacyText});
+        } else {
+            fileNotice.classList.remove('hidden');
+            fileNotice.textContent='Questa è una playlist caricata come file. Puoi modificare nome e lezione; il file esistente resterà invariato.';
+        }
+        modal.classList.remove('hidden');
+        try { await loadLessons(); lessonSelect.value=playlist.lesson_id || ''; } catch(error) { console.error(error); alert('Impossibile caricare le lezioni: '+error.message); }
+    };
+}
 }
 async function loadStudentPlaylists() {
     const container = document.getElementById('student-playlists-container');
