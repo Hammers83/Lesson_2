@@ -11,6 +11,56 @@ function playlistEscapeHtml(value) {
         .replace(/'/g, '&#039;');
 }
 
+
+function parsePlaylistTextToTracks(rawText = '') {
+    const lines = String(rawText || '')
+        .split(/\\r?\\n/)
+        .map(line => line.replace(/^\\s*(?:[-*•]\\s*|\\d+[.)]\\s*)/, '').trim())
+        .filter(Boolean);
+
+    return lines.map(line => {
+        // Formato consigliato: Artista - Titolo oppure Titolo - Artista.
+        const parts = line.split(/\\s+[–—-]\\s+/);
+        if (parts.length >= 2) {
+            return { title: parts.slice(1).join(' - ').trim(), artist: parts[0].trim(), url: '' };
+        }
+        return { title: line, artist: '', url: '' };
+    }).filter(track => track.title || track.artist);
+}
+
+function fillPlaylistTrackBuilder(tracksContainer, tracks) {
+    if (!tracksContainer) return;
+    tracksContainer.innerHTML = '';
+    tracks.forEach(track => {
+        const row = document.createElement('div');
+        row.className = 'playlist-track-row grid grid-cols-1 sm:grid-cols-[auto_1fr_1fr_1.2fr_auto] gap-2 items-center bg-brand-dark/60 border border-brand-border rounded-xl p-2';
+        const n = document.createElement('span'); n.className = 'track-number w-7 h-7 rounded-lg bg-brand-cyan/10 text-brand-cyan flex items-center justify-center text-[10px] font-black';
+        const title = document.createElement('input'); title.type='text'; title.dataset.field='title'; title.placeholder='Titolo brano'; title.value=track.title || ''; title.className='w-full px-3 py-2 bg-brand-dark border border-brand-border rounded-lg text-white text-xs focus:outline-none focus:border-brand-cyan';
+        const artist = document.createElement('input'); artist.type='text'; artist.dataset.field='artist'; artist.placeholder='Artista'; artist.value=track.artist || ''; artist.className=title.className;
+        const url = document.createElement('input'); url.type='url'; url.dataset.field='url'; url.placeholder='Link YouTube / Spotify (opzionale)'; url.value=track.url || ''; url.className=title.className;
+        const actions = document.createElement('div'); actions.className='flex gap-1 justify-end';
+        [['up','fa-chevron-up'],['down','fa-chevron-down'],['remove','fa-trash']].forEach(item => {
+            const b=document.createElement('button'); b.type='button'; b.dataset.action=item[0]; b.className='px-2 py-2 rounded-lg bg-white/5 text-gray-300 hover:text-white'; b.innerHTML='<i class="fa-solid '+item[1]+'"></i>'; actions.appendChild(b);
+        });
+        row.append(n,title,artist,url,actions);
+        tracksContainer.appendChild(row);
+    });
+}
+
+async function recognizePlaylistPhoto(file, statusEl) {
+    if (!window.Tesseract) throw new Error('OCR non disponibile. Ricarica la pagina e riprova.');
+    if (statusEl) statusEl.textContent = 'Lettura della foto in corso...';
+    const result = await Tesseract.recognize(file, 'ita+eng', {
+        logger: message => {
+            if (!statusEl || !message?.status) return;
+            const progress = typeof message.progress === 'number' ? Math.round(message.progress * 100) : 0;
+            statusEl.textContent = progress ? 'Lettura foto: ' + progress + '%' : 'Lettura della foto in corso...';
+        }
+    });
+    return result?.data?.text || '';
+}
+
+
 function getPlaylistFileLabel(fileName = '') {
     const ext = fileName.split('.').pop()?.toLowerCase();
     if (['mp3', 'wav', 'm4a', 'aac', 'ogg'].includes(ext)) return 'Audio';
@@ -203,6 +253,11 @@ function initPlaylistAdminForm(userId) {
     const builder = document.getElementById('playlist-builder-field');
     const tracksContainer = document.getElementById('playlist-tracks');
     const addTrackBtn = document.getElementById('btn-add-playlist-track');
+    const txtImportInput = document.getElementById('playlist-txt-import');
+    const photoInput = document.getElementById('playlist-photo-import');
+    const importTxtBtn = document.getElementById('btn-import-playlist-txt');
+    const importPhotoBtn = document.getElementById('btn-import-playlist-photo');
+    const importStatus = document.getElementById('playlist-import-status');
     const btn = document.getElementById('btn-upload-playlist');
 
     const refreshNumbers = () => [...tracksContainer.children].forEach((row, i) => row.querySelector('.track-number').textContent = i + 1);
@@ -217,6 +272,45 @@ function initPlaylistAdminForm(userId) {
         [['up','fa-chevron-up'],['down','fa-chevron-down'],['remove','fa-trash']].forEach(item => { const b=document.createElement('button'); b.type='button'; b.dataset.action=item[0]; b.className='px-2 py-2 rounded-lg bg-white/5 text-gray-300 hover:text-white'; b.innerHTML='<i class="fa-solid '+item[1]+'"></i>'; actions.appendChild(b); });
         row.append(n,title,artist,url,actions); tracksContainer.appendChild(row); refreshNumbers(); title.focus();
     };
+    const importTracks = (tracks, sourceLabel) => {
+        if (!tracks.length) {
+            alert('Non ho trovato brani nella lista.');
+            return;
+        }
+        fillPlaylistTrackBuilder(tracksContainer, tracks);
+        refreshNumbers();
+        if (importStatus) importStatus.textContent = sourceLabel + ': ' + tracks.length + ' brani trovati. Controllali prima di salvare.';
+    };
+
+    importTxtBtn?.addEventListener('click', () => txtImportInput?.click());
+    txtImportInput?.addEventListener('change', async () => {
+        const file = txtImportInput.files?.[0];
+        if (!file) return;
+        try {
+            importTracks(parsePlaylistTextToTracks(await file.text()), 'TXT importato');
+        } catch (error) {
+            console.error(error);
+            alert('Errore nella lettura del TXT: ' + error.message);
+        } finally {
+            txtImportInput.value = '';
+        }
+    });
+
+    importPhotoBtn?.addEventListener('click', () => photoInput?.click());
+    photoInput?.addEventListener('change', async () => {
+        const file = photoInput.files?.[0];
+        if (!file) return;
+        try {
+            const text = await recognizePlaylistPhoto(file, importStatus);
+            importTracks(parsePlaylistTextToTracks(text), 'Foto convertita');
+        } catch (error) {
+            console.error(error);
+            alert('Errore OCR: ' + error.message);
+        } finally {
+            photoInput.value = '';
+        }
+    });
+
     addTrackBtn.addEventListener('click', addTrack);
     tracksContainer.addEventListener('click', e => { const b=e.target.closest('button[data-action]'); if(!b)return; const row=b.closest('.playlist-track-row'); if(b.dataset.action==='remove')row.remove(); if(b.dataset.action==='up'&&row.previousElementSibling)row.parentElement.insertBefore(row,row.previousElementSibling); if(b.dataset.action==='down'&&row.nextElementSibling)row.parentElement.insertBefore(row.nextElementSibling,row); refreshNumbers(); });
     const syncMode=()=>{ const text=typeInput.value==='text'; builder.classList.toggle('hidden',!text); fileField.classList.toggle('hidden',text); fileInput.required=!text; };
