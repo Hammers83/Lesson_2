@@ -40,11 +40,14 @@ document.addEventListener('DOMContentLoaded', async () => {
     currentSessionData = await checkAuthAndRedirect('admin');
     if (!currentSessionData) return;
 
-    // Imposta il nome dell'Istruttore nell'intestazione
+    // Imposta il nome e la foto dell'Istruttore
     setInstructorName(currentSessionData.profile);
 
     if (typeof renderNavbar === 'function') {
         renderNavbar(currentSessionData.profile);
+    }
+    if (typeof renderAvatarEditor === 'function') {
+        renderAvatarEditor(currentSessionData.profile, { containerId: 'profile-avatar-editor', title: 'Foto profilo istruttore' });
     }
     
     // Inizializza notifiche anche per l'istruttore.
@@ -61,6 +64,14 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     // Gestione Eventi Modali
     setupModalEvents();
+});
+
+window.addEventListener('profile-avatar-updated', (event) => {
+    const profile = event.detail;
+    if (!profile) return;
+    if (typeof setAvatarImage === 'function') {
+        setAvatarImage(document.getElementById('nav-avatar-img'), profile);
+    }
 });
 
 function setInstructorName(profile) {

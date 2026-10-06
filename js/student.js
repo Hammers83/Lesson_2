@@ -7,9 +7,12 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     currentSessionData = authData;
 
-    // 2. Render della Navbar
+    // 2. Render della Navbar e gestione avatar
     if (typeof renderNavbar === 'function') {
         renderNavbar(authData.profile);
+    }
+    if (typeof renderAvatarEditor === 'function') {
+        renderAvatarEditor(authData.profile, { containerId: 'profile-avatar-editor', title: 'La tua foto profilo' });
     }
 
     // 3. Carica i dati del profilo e gestisci lo stato del certificato
@@ -41,6 +44,15 @@ function escapeHtml(str) {
         .replace(/'/g, '&#039;');
 }
 
+window.addEventListener('profile-avatar-updated', (event) => {
+    const profile = event.detail;
+    if (!profile) return;
+    if (typeof setAvatarImage === 'function') {
+        setAvatarImage(document.getElementById('student-avatar-img'), profile);
+        setAvatarImage(document.getElementById('nav-avatar-img'), profile);
+    }
+});
+
 // Mostra i dati del profilo (Nome, Saluto e Stato Certificato)
 function renderStudentProfile(profile) {
     const welcomeEl = document.getElementById('student-welcome');
@@ -51,9 +63,8 @@ function renderStudentProfile(profile) {
         welcomeEl.innerText = `Ciao, ${profile.nome || 'Allieva'}!`;
     }
 
-    if (avatarEl) {
-        const initial = profile.nome ? profile.nome.charAt(0).toUpperCase() : 'Z';
-        avatarEl.src = profile.avatar_url || `https://ui-avatars.com/api/?name=${encodeURIComponent(initial)}&background=CCFF00&color=000`;
+    if (avatarEl && typeof setAvatarImage === 'function') {
+        setAvatarImage(avatarEl, profile);
     }
 
     if (certStatusEl) {
