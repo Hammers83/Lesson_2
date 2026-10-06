@@ -37,7 +37,7 @@ body::before {
     top: 50%;
     transform: translateY(-50%);
     background: url('../assets/angelo-sticker.png') center / contain no-repeat;
-    opacity: 0.115;
+    opacity: 0.400;
     filter: saturate(0.9) contrast(0.92);
 }
 
