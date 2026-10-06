@@ -337,7 +337,8 @@
     <script>
         document.addEventListener('DOMContentLoaded', async () => {
             try {
-                const session = await getCurrentSession();
+                const { data } = await getSupabase().auth.getSession();
+                const session = data?.session;
                 if (session?.user?.id) initPlaylistEditModal(session.user.id);
             } catch (error) {
                 console.error('Errore inizializzazione modifica playlist:', error);
