@@ -257,3 +257,9 @@ function renderNavbar(profile) {
     `;
     setAvatarImage(document.getElementById('nav-avatar-img'), profile);
 }
+
+// Accesso uniforme al client Supabase usato dagli altri moduli.
+function getSupabase() {
+    return window.supabaseClient;
+}
+window.getSupabase = getSupabase;
