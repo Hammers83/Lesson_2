@@ -18,3 +18,46 @@
     backdrop-filter: blur(16px);
     border: 1px solid rgba(255, 255, 255, 0.08);
 }
+
+/* Immagine personale di sfondo - elemento decorativo, senza interferire con l'interfaccia */
+body {
+    position: relative;
+    isolation: isolate;
+    overflow-x: hidden;
+}
+
+body::before {
+    content: "";
+    position: fixed;
+    z-index: -2;
+    pointer-events: none;
+    width: min(72vw, 980px);
+    height: min(72vw, 820px);
+    right: -4vw;
+    top: 50%;
+    transform: translateY(-50%);
+    background: url('../assets/angelo-sticker.png') center / contain no-repeat;
+    opacity: 0.115;
+    filter: saturate(0.9) contrast(0.92);
+}
+
+body::after {
+    content: "";
+    position: fixed;
+    inset: 0;
+    z-index: -1;
+    pointer-events: none;
+    background:
+        radial-gradient(circle at 82% 48%, rgba(0, 229, 255, 0.055), transparent 38%),
+        linear-gradient(90deg, rgba(11, 15, 25, 0.18) 0%, rgba(11, 15, 25, 0.02) 48%, rgba(11, 15, 25, 0.18) 100%);
+}
+
+@media (max-width: 768px) {
+    body::before {
+        width: 125vw;
+        height: 78vh;
+        right: -38vw;
+        top: 52%;
+        opacity: 0.075;
+    }
+}
