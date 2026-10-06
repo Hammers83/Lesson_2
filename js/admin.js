@@ -3,9 +3,6 @@ let chartPresenzeInstance = null;
 let chartCertificatiInstance = null;
 let lessonsData = [];
 
-// Gestore globale del client Supabase
-const getSupabase = () => window.supabaseClient || window.supabase;
-
 // Utility per sanificare il testo ed evitare vulnerabilità XSS
 function escapeHtml(str) {
     if (!str) return '';
