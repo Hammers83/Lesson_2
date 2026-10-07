@@ -160,6 +160,27 @@ window.openAttendanceModal = async function(lessonId) {
     html += '</div><p class="text-[10px] text-gray-500 mt-2">Inserisci il nome completo. Se l’allieva è già registrata al sito, verrà riconosciuta automaticamente come allieva.</p></div>';
     list.innerHTML = html;
 
+    document.getElementById('btn-add-registered-attendance').onclick = function() {
+        const select = document.getElementById('attendance-registered-select');
+        const userId = select.value;
+        if (!userId) return;
+
+        const option = select.options[select.selectedIndex];
+        const name = option ? option.textContent : 'Allieva';
+        const registeredList = document.getElementById('attendance-registered-list');
+        const emptyMessage = document.getElementById('attendance-no-bookings');
+        if (emptyMessage) emptyMessage.remove();
+
+        const label = document.createElement('label');
+        label.className = 'flex items-center justify-between gap-3 bg-brand-card border border-brand-border rounded-xl p-3 cursor-pointer';
+        label.innerHTML = '<span class="text-sm font-bold text-white">' + escapeHtml(name) + ' <span class="text-[9px] text-brand-cyan uppercase ml-1">aggiunta</span></span>' +
+            '<input type="checkbox" class="attendance-registered w-5 h-5" data-user-id="' + escapeHtml(userId) + '" checked>';
+        registeredList.appendChild(label);
+
+        option.remove();
+        select.value = '';
+    };
+
     document.getElementById('btn-add-attendance-guest').onclick = function() {
         const wrap = document.getElementById('attendance-guests');
         const row = document.createElement('div');
