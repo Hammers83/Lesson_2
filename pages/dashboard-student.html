@@ -48,9 +48,14 @@
                             <h4 class="text-xs font-black uppercase text-white tracking-wider">
                                 <i class="fa-solid fa-bell text-brand-cyan mr-1"></i> Notifiche
                             </h4>
-                            <button onclick="markAllNotificationsAsRead()" class="text-[10px] font-bold text-brand-cyan hover:underline">
-                                Segna tutte come lette
-                            </button>
+                            <div class="flex items-center gap-3">
+                                <button onclick="markAllNotificationsAsRead()" class="text-[10px] font-bold text-brand-cyan hover:underline">
+                                    Segna tutte come lette
+                                </button>
+                                <button onclick="clearReadNotifications()" class="text-[10px] font-bold text-brand-pink hover:underline">
+                                    Pulisci lette
+                                </button>
+                            </div>
                         </div>
 
                         <div id="notif-list-container" class="max-h-64 overflow-y-auto space-y-2 pr-1">
