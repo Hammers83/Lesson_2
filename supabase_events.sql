@@ -71,7 +71,11 @@ using (exists (select 1 from public.profiles p where p.id = auth.uid() and p.is_
 
 drop policy if exists event_bookings_select_authenticated on public.event_bookings;
 create policy event_bookings_select_authenticated on public.event_bookings
-for select to authenticated using (true);
+for select to authenticated
+using (
+    user_id = auth.uid()
+    or exists (select 1 from public.profiles p where p.id = auth.uid() and p.is_admin = true)
+);
 
 -- Le iscrizioni vengono create tramite RPC atomica, così la capienza
 -- non può essere superata da due iscrizioni simultanee.
