@@ -57,7 +57,7 @@ async function loadAttendanceHistory() {
                         ? ((profile.nome || '') + ' ' + (profile.cognome || '')).trim()
                         : (row.guest_name || 'Partecipante');
                     const icon = row.status === 'present' ? 'fa-circle-check text-brand-lime' : 'fa-circle-xmark text-brand-pink';
-                    const type = row.profiles ? 'Iscritta' : 'Ospite / New entry';
+                    const type = row.user_id ? '' : 'New entry';
                     return '<div class="flex justify-between items-center text-xs bg-brand-card rounded-xl px-3 py-2">' +
                         '<span class="font-bold text-white"><i class="fa-solid ' + icon + ' mr-2"></i>' + escapeHtml(name) + '</span>' +
                         '<span class="text-[9px] text-gray-500 uppercase">' + type + '</span></div>';
