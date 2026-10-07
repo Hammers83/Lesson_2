@@ -15,9 +15,10 @@ create table if not exists public.attendance_records (
     )
 );
 
+drop index if exists public.attendance_lesson_user_unique;
+
 create unique index if not exists attendance_lesson_user_unique
-    on public.attendance_records (lesson_id, user_id)
-    where user_id is not null;
+    on public.attendance_records (lesson_id, user_id);
 
 create index if not exists attendance_lesson_idx
     on public.attendance_records (lesson_id);
