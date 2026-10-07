@@ -418,8 +418,7 @@ window.openParticipantsModal = async function(kind, itemId) {
             '</div>' +
             '<span class="text-sm font-bold text-white">' + eventEscapeHtml(fullName) + '</span>' +
         '</div>';
-    }).join('') + '</div>' +
-    '<p class="text-[10px] text-gray-500 mt-3 text-center"><i class="fa-solid fa-car-side mr-1"></i> Usa questo elenco per accordarti privatamente con le altre partecipanti sul viaggio. Nessun numero di telefono o altro recapito viene mostrato.</p>';
+    }).join('') + '</div>';
 };
 
 window.toggleEventBooking = async function(eventId, userId) {
