@@ -36,6 +36,9 @@ document.addEventListener('DOMContentLoaded', async () => {
     if (typeof loadAvailableEvents === 'function') {
         await loadAvailableEvents(authData.user.id);
     }
+    if (typeof subscribeToEventRealtime === 'function') {
+        subscribeToEventRealtime('student', authData.user.id);
+    }
 
     // 7. Inizializza la chat per l'allieva
     if (typeof initChat === 'function') {
