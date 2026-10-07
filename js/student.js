@@ -100,6 +100,7 @@ async function loadAvailableLessons(userId, profile = {}) {
     const { data: lessons, error } = await sb
         .from('lessons')
         .select('*, bookings(user_id)')
+        .gte('datetime', new Date().toISOString())
         .order('datetime', { ascending: true });
 
     if (error) {
@@ -113,8 +114,21 @@ async function loadAvailableLessons(userId, profile = {}) {
         return;
     }
 
+    const lessonIds = lessons.map(l => l.id);
+    const participantsResult = await sb.rpc('get_lesson_participants', { p_lesson_ids: lessonIds });
+    if (participantsResult.error) {
+        console.error("Errore caricamento partecipanti lezioni:", participantsResult.error);
+    }
+
+    const participantsByLesson = {};
+    (participantsResult.data || []).forEach(function(p) {
+        if (!participantsByLesson[p.lesson_id]) participantsByLesson[p.lesson_id] = [];
+        participantsByLesson[p.lesson_id].push(p);
+    });
+
     container.innerHTML = lessons.map(lesson => {
         const bookingsList = lesson.bookings || [];
+        const participants = participantsByLesson[lesson.id] || [];
         const isBooked = bookingsList.some(b => b.user_id === userId);
         const bookedCount = bookingsList.length;
         const capacity = lesson.capacity || 20;
@@ -126,16 +140,13 @@ async function loadAvailableLessons(userId, profile = {}) {
 
         let buttonHtml = '';
         if (isBooked) {
-            // L'annullamento resta nel codice ma la UI è temporaneamente nascosta.
             buttonHtml = `
                 <div class="w-full py-2.5 bg-brand-lime/10 text-brand-lime border border-brand-lime/30 text-xs font-bold rounded-xl text-center">
                     <i class="fa-solid fa-circle-check mr-1"></i> Prenotazione confermata
                 </div>`;
         } else if (isFull) {
             buttonHtml = `
-                <button disabled class="w-full py-2.5 bg-gray-700 text-gray-400 text-xs uppercase rounded-xl cursor-not-allowed">
-                    Sold Out
-                </button>`;
+                <button disabled class="w-full py-2.5 bg-gray-700 text-gray-400 text-xs uppercase rounded-xl cursor-not-allowed">Sold Out</button>`;
         } else {
             buttonHtml = `
                 <button onclick="toggleBooking('${lesson.id}', '${userId}', false)" class="w-full py-2.5 btn-gradient text-black font-black text-xs uppercase rounded-xl transition">
@@ -153,13 +164,12 @@ async function loadAvailableLessons(userId, profile = {}) {
                         </span>
                     </div>
                     <h4 class="text-base font-black text-white">${escapeHtml(lesson.title || 'Zumba Fitness')}</h4>
+                    <button type="button" onclick="openParticipantsModal('lesson', '${lesson.id}')" class="mt-3 text-[10px] font-black uppercase text-brand-cyan hover:underline">
+                        <i class="fa-solid fa-users mr-1"></i> Chi viene? (${participants.length})
+                    </button>
                 </div>
-
-                <div>
-                    ${buttonHtml}
-                </div>
-            </div>
-        `;
+                <div>${buttonHtml}</div>
+            </div>`;
     }).join('');
 }
 
