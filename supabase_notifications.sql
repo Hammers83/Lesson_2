@@ -57,6 +57,15 @@ begin
     end if;
 end $$;
 
+
+-- Permette a ogni utente autenticato di eliminare solo le proprie notifiche già lette.
+drop policy if exists notifications_delete_own on public.notifications;
+
+create policy notifications_delete_own
+    on public.notifications for delete
+    to authenticated
+    using (auth.uid() = user_id);
+
 -- Abilita il realtime sulla tabella solo se non è già presente nella publication.
 do $$
 begin
