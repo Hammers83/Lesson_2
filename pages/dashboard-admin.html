@@ -201,18 +201,21 @@
         </div>
 
         <!-- GRAFICI ANALYTICS -->
-        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            <div class="glass-panel p-6 rounded-3xl">
-                <h4 class="text-sm font-bold uppercase text-gray-300 mb-4">Presenze per Sessione</h4>
-                <div class="relative h-64 w-full">
-                    <canvas id="chart-presenze"></canvas>
+        <div class="glass-panel p-6 rounded-3xl border-l-4 border-l-brand-cyan">
+            <div class="flex flex-wrap justify-between items-center gap-3 border-b border-brand-border pb-4">
+                <div>
+                    <h3 class="text-lg font-black uppercase text-white flex items-center gap-2">
+                        <i class="fa-solid fa-chart-pie text-brand-cyan"></i> Analytics
+                    </h3>
+                    <p class="text-[10px] text-gray-500 mt-1">Scegli quale analisi visualizzare.</p>
                 </div>
+                <select id="analytics-chart-select" class="bg-brand-dark border border-brand-border rounded-xl px-3 py-2.5 text-xs text-white font-bold focus:outline-none focus:border-brand-cyan">
+                    <option value="presenze">Presenze per sessione</option>
+                    <option value="certificati">Stato certificati medici</option>
+                </select>
             </div>
-            <div class="glass-panel p-6 rounded-3xl">
-                <h4 class="text-sm font-bold uppercase text-gray-300 mb-4">Stato Certificati Medici</h4>
-                <div class="relative h-64 w-full flex justify-center">
-                    <canvas id="chart-certificati"></canvas>
-                </div>
+            <div class="mt-5 relative h-80 w-full flex justify-center">
+                <canvas id="chart-analytics"></canvas>
             </div>
         </div>
 
