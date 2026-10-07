@@ -383,6 +383,45 @@ async function loadAvailableEvents(userId) {
     }).join('');
 }
 
+window.openParticipantsModal = async function(kind, itemId) {
+    const modal = document.getElementById('modal-participants');
+    const title = document.getElementById('participants-modal-title');
+    const list = document.getElementById('participants-modal-list');
+    if (!modal || !title || !list) return;
+
+    title.textContent = kind === 'event' ? 'Chi viene all’evento?' : 'Chi viene alla lezione?';
+    list.innerHTML = '<p class="text-xs text-gray-500 italic text-center py-4"><i class="fa-solid fa-spinner fa-spin mr-1"></i> Caricamento partecipanti...</p>';
+    modal.classList.remove('hidden');
+
+    const sb = getSupabase();
+    const rpcName = kind === 'event' ? 'get_event_participants' : 'get_lesson_participants';
+    const argName = kind === 'event' ? 'p_event_ids' : 'p_lesson_ids';
+    const { data, error } = await sb.rpc(rpcName, { [argName]: [itemId] });
+
+    if (error) {
+        console.error('Errore elenco partecipanti:', error);
+        list.innerHTML = '<p class="text-xs text-brand-pink text-center py-4">Non è stato possibile caricare l’elenco delle partecipanti.</p>';
+        return;
+    }
+
+    const participants = data || [];
+    if (!participants.length) {
+        list.innerHTML = '<p class="text-xs text-gray-500 italic text-center py-4">Ancora nessuna prenotazione.</p>';
+        return;
+    }
+
+    list.innerHTML = '<div class="space-y-2">' + participants.map(function(p) {
+        const fullName = ((p.nome || '') + ' ' + (p.cognome || '')).trim() || 'Allieva';
+        return '<div class="flex items-center gap-3 bg-brand-card border border-brand-border rounded-xl p-3">' +
+            '<div class="w-8 h-8 rounded-full bg-brand-pink/10 border border-brand-pink/30 flex items-center justify-center shrink-0">' +
+                '<i class="fa-solid fa-user text-brand-pink text-xs"></i>' +
+            '</div>' +
+            '<span class="text-sm font-bold text-white">' + eventEscapeHtml(fullName) + '</span>' +
+        '</div>';
+    }).join('') + '</div>' +
+    '<p class="text-[10px] text-gray-500 mt-3 text-center"><i class="fa-solid fa-car-side mr-1"></i> Usa questo elenco per accordarti privatamente con le altre partecipanti sul viaggio. Nessun numero di telefono o altro recapito viene mostrato.</p>';
+};
+
 window.toggleEventBooking = async function(eventId, userId) {
     const sb = getSupabase();
     if (!sb) return;
