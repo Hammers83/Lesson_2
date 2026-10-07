@@ -118,10 +118,11 @@ async function loadAvailableLessons(userId, profile = {}) {
 
         let buttonHtml = '';
         if (isBooked) {
+            // L'annullamento resta nel codice ma la UI è temporaneamente nascosta.
             buttonHtml = `
-                <button onclick="toggleBooking('${lesson.id}', '${userId}', true)" class="w-full py-2.5 bg-brand-pink/20 hover:bg-brand-pink text-brand-pink hover:text-white border border-brand-pink/40 text-xs font-bold rounded-xl transition">
-                    <i class="fa-solid fa-xmark mr-1"></i> Annulla Prenotazione
-                </button>`;
+                <div class="w-full py-2.5 bg-brand-lime/10 text-brand-lime border border-brand-lime/30 text-xs font-bold rounded-xl text-center">
+                    <i class="fa-solid fa-circle-check mr-1"></i> Prenotazione confermata
+                </div>`;
         } else if (isFull) {
             buttonHtml = `
                 <button disabled class="w-full py-2.5 bg-gray-700 text-gray-400 text-xs uppercase rounded-xl cursor-not-allowed">
