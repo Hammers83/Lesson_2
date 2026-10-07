@@ -388,60 +388,75 @@ async function renderAnalytics() {
     }
 
     const sb = getSupabase();
-    const { data: profiles } = await sb.from('profiles').select('*').eq('is_admin', false);
-    const { data: lessons } = await sb.from('lessons').select('title, bookings(count)');
+    const [profilesResult, lessonsResult] = await Promise.all([
+        sb.from('profiles').select('*').eq('is_admin', false),
+        sb.from('lessons').select('title, datetime, bookings(count)').order('datetime', { ascending: true })
+    ]);
 
+    const profiles = profilesResult.data || [];
+    const lessons = lessonsResult.data || [];
     let validi = 0, scaduti = 0;
     const today = new Date();
-    today.setHours(0,0,0,0);
+    today.setHours(0, 0, 0, 0);
 
-    if (profiles) {
-        profiles.forEach(p => {
-            const dataScad = p.medical_certificate_expiration || p.scadenza_certificato || p.certificato_scadenza;
-            if (!dataScad) {
-                scaduti++;
-            } else {
-                const expDate = new Date(dataScad);
-                expDate.setHours(23, 59, 59, 999);
-                if (expDate < today) {
-                    scaduti++;
-                } else {
-                    validi++;
+    profiles.forEach(function(p) {
+        const dataScad = p.medical_certificate_expiration || p.scadenza_certificato || p.certificato_scadenza;
+        if (!dataScad) scaduti++;
+        else {
+            const expDate = new Date(dataScad);
+            expDate.setHours(23, 59, 59, 999);
+            if (expDate < today) scaduti++; else validi++;
+        }
+    });
+
+    const chartEl = document.getElementById('chart-analytics');
+    const selectEl = document.getElementById('analytics-chart-select');
+    if (!chartEl) return;
+
+    function drawChart(type) {
+        if (chartPresenzeInstance) { chartPresenzeInstance.destroy(); chartPresenzeInstance = null; }
+        if (chartCertificatiInstance) { chartCertificatiInstance.destroy(); chartCertificatiInstance = null; }
+
+        if (type === 'certificati') {
+            chartCertificatiInstance = new Chart(chartEl.getContext('2d'), {
+                type: 'doughnut',
+                data: {
+                    labels: ['Validi', 'Scaduti/Assenti'],
+                    datasets: [{ data: [validi, scaduti], backgroundColor: ['#CCFF00', '#FF007F'], borderWidth: 0 }]
+                },
+                options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'bottom' } } }
+            });
+        } else {
+            const labels = lessons.map(function(l) {
+                const date = l.datetime ? new Date(l.datetime) : null;
+                const dateLabel = date && !isNaN(date.getTime()) ? date.toLocaleDateString('it-IT', { day: '2-digit', month: '2-digit' }) : '';
+                return (l.title || 'Lezione') + (dateLabel ? ' · ' + dateLabel : '');
+            });
+            const counts = lessons.map(function(l) {
+                return (l.bookings && l.bookings[0]) ? Number(l.bookings[0].count || 0) : 0;
+            });
+            chartPresenzeInstance = new Chart(chartEl.getContext('2d'), {
+                type: 'bar',
+                data: {
+                    labels: labels,
+                    datasets: [{ label: 'Partecipanti', data: counts, backgroundColor: '#00E5FF', borderRadius: 8 }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: { legend: { display: false } },
+                    scales: { y: { beginAtZero: true, ticks: { precision: 0 } } }
                 }
-            }
-        });
+            });
+        }
     }
 
-    const chartCertEl = document.getElementById('chart-certificati');
-    if (chartCertEl) {
-        if (chartCertificatiInstance) chartCertificatiInstance.destroy();
-        chartCertificatiInstance = new Chart(chartCertEl.getContext('2d'), {
-            type: 'doughnut',
-            data: {
-                labels: ['Validi', 'Scaduti/Assenti'],
-                datasets: [{ data: [validi, scaduti], backgroundColor: ['#CCFF00', '#FF007F'], borderWidth: 0 }]
-            },
-            options: { responsive: true, maintainAspectRatio: false }
-        });
-    }
-
-    const labels = lessons ? lessons.map(l => l.title || 'Lezione') : [];
-    const counts = lessons ? lessons.map(l => (l.bookings && l.bookings[0]) ? l.bookings[0].count : 0) : [];
-
-    const chartPresEl = document.getElementById('chart-presenze');
-    if (chartPresEl) {
-        if (chartPresenzeInstance) chartPresenzeInstance.destroy();
-        chartPresenzeInstance = new Chart(chartPresEl.getContext('2d'), {
-            type: 'bar',
-            data: {
-                labels: labels,
-                datasets: [{ label: 'Partecipanti', data: counts, backgroundColor: '#00E5FF', borderRadius: 8 }]
-            },
-            options: { responsive: true, maintainAspectRatio: false }
-        });
+    drawChart(selectEl ? selectEl.value : 'presenze');
+    if (selectEl && !selectEl.dataset.bound) {
+        selectEl.addEventListener('change', function() { drawChart(this.value); });
+        selectEl.dataset.bound = 'true';
     }
 }
-
 
 window.openBirthdaysModal = async function() {
     const modal = document.getElementById('modal-birthdays');
