@@ -53,6 +53,9 @@ document.addEventListener('DOMContentLoaded', async () => {
     }
 
     await loadAdminDashboard();
+    if (typeof subscribeToEventRealtime === 'function') {
+        subscribeToEventRealtime('admin', currentSessionData.user.id);
+    }
 
     // Gestione playlist delle lezioni
     if (typeof initPlaylistAdminForm === 'function') {
