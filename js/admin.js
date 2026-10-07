@@ -232,6 +232,7 @@ async function loadAdminLessons() {
     }
 
     lessonsData = lessons;
+    window.lessonsData = lessonsData;
 
     if (lessons.length === 0) {
         container.innerHTML = `<p class="text-xs text-gray-400 col-span-2">Nessuna lezione creata.</p>`;
