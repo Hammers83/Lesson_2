@@ -154,6 +154,39 @@ drop policy if exists event_bookings_delete_own on public.event_bookings;
 create policy event_bookings_delete_own on public.event_bookings
 for delete to authenticated using (user_id = auth.uid());
 
+-- Copertine evento: bucket pubblico, upload riservato all'istruttore.
+insert into storage.buckets (id, name, public)
+values ('event-covers', 'event-covers', true)
+on conflict (id) do update set public = true;
+
+drop policy if exists "Admins can upload event covers" on storage.objects;
+create policy "Admins can upload event covers"
+on storage.objects for insert to authenticated
+with check (
+    bucket_id = 'event-covers'
+    and exists (select 1 from public.profiles p where p.id = auth.uid() and p.is_admin = true)
+);
+
+drop policy if exists "Admins can update event covers" on storage.objects;
+create policy "Admins can update event covers"
+on storage.objects for update to authenticated
+using (
+    bucket_id = 'event-covers'
+    and exists (select 1 from public.profiles p where p.id = auth.uid() and p.is_admin = true)
+)
+with check (
+    bucket_id = 'event-covers'
+    and exists (select 1 from public.profiles p where p.id = auth.uid() and p.is_admin = true)
+);
+
+drop policy if exists "Admins can delete event covers" on storage.objects;
+create policy "Admins can delete event covers"
+on storage.objects for delete to authenticated
+using (
+    bucket_id = 'event-covers'
+    and exists (select 1 from public.profiles p where p.id = auth.uid() and p.is_admin = true)
+);
+
 -- Admin: notifica in modo sicuro tutte le allieve già iscritte.
 drop function if exists public.notify_event_attendees(uuid,text,text,text);
 create or replace function public.notify_event_attendees(
