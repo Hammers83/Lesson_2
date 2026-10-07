@@ -92,7 +92,7 @@
         <div class="glass-panel p-6 rounded-3xl space-y-4">
             <div class="flex flex-wrap justify-between items-center gap-3 border-b border-brand-border pb-4">
                 <h3 class="text-lg font-black uppercase text-white flex items-center gap-2">
-                    <i class="fa-solid fa-list-check text-brand-cyan"></i> Programmazione Lezioni &amp; Elenco Iscritti
+                    <i class="fa-solid fa-list-check text-brand-cyan"></i> Programmazione Lezioni &amp; Eventi
                 </h3>
                 <button id="btn-open-create-modal" class="px-4 py-2.5 btn-gradient text-black font-black uppercase text-xs rounded-xl shadow-lg hover:opacity-90 transition flex items-center gap-2">
                     <i class="fa-solid fa-plus text-sm"></i> Nuova Lezione
@@ -102,6 +102,15 @@
             <div id="admin-lessons-container" class="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <!-- Popolato da admin.js -->
             </div>
+        </div>
+
+        <!-- EVENTI ORGANIZZATI -->
+        <div class="glass-panel p-6 rounded-3xl space-y-4 border-l-4 border-l-brand-pink">
+            <div class="flex items-center justify-between border-b border-brand-border pb-4">
+                <h3 class="text-lg font-black uppercase text-white flex items-center gap-2"><i class="fa-solid fa-calendar-days text-brand-pink"></i> Eventi organizzati</h3>
+                <span class="text-[10px] text-gray-500">Gestione eventi e iscrizioni</span>
+            </div>
+            <div id="admin-events-container" class="grid grid-cols-1 md:grid-cols-2 gap-4"><p class="text-xs text-gray-500 italic">Caricamento eventi...</p></div>
         </div>
 
         <!-- PLAYLIST DELLE LEZIONI -->
@@ -403,6 +412,42 @@
     </div>
 
     <!-- SCRIPT APPLICATION LOGIC -->
+
+    <div id="modal-create-event" class="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
+        <div class="bg-brand-card border border-brand-pink/40 p-6 rounded-3xl max-w-2xl w-full space-y-4 shadow-2xl">
+            <div class="flex justify-between items-center border-b border-brand-border pb-3">
+                <h3 class="text-lg font-black uppercase text-white"><i class="fa-solid fa-calendar-plus text-brand-pink mr-2"></i>Nuovo Evento</h3>
+                <button id="btn-close-create-event" type="button" class="text-gray-400 hover:text-white text-xl"><i class="fa-solid fa-xmark"></i></button>
+            </div>
+            <form id="form-create-event" class="space-y-4">
+                <input id="event-title" required placeholder="Nome evento" class="w-full px-3 py-2.5 bg-brand-dark border border-brand-border rounded-xl text-white text-xs">
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+                    <input id="event-datetime" type="datetime-local" required class="w-full px-3 py-2.5 bg-brand-dark border border-brand-border rounded-xl text-white text-xs">
+                    <input id="event-location" placeholder="Luogo" class="w-full px-3 py-2.5 bg-brand-dark border border-brand-border rounded-xl text-white text-xs">
+                </div>
+                <div><label class="block text-xs font-bold text-gray-400 uppercase mb-1">Posti disponibili</label><input id="event-capacity" type="number" min="1" value="20" required class="w-full px-3 py-2.5 bg-brand-dark border border-brand-border rounded-xl text-white text-xs"></div>
+                <textarea id="event-description" rows="4" placeholder="Descrizione / informazioni per le allieve" class="w-full px-3 py-2.5 bg-brand-dark border border-brand-border rounded-xl text-white text-xs"></textarea>
+                <div class="flex justify-end gap-2"><button type="button" id="btn-cancel-create-event" class="px-4 py-2.5 bg-brand-dark border border-brand-border text-gray-300 rounded-xl text-xs font-bold uppercase">Annulla</button><button type="submit" class="bg-brand-pink text-white font-black px-5 py-2.5 rounded-xl text-xs uppercase">Crea Evento</button></div>
+            </form>
+        </div>
+    </div>
+    <div id="modal-edit-event" class="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
+        <div class="bg-brand-card border border-brand-cyan/40 p-6 rounded-3xl max-w-2xl w-full space-y-4 shadow-2xl">
+            <div class="flex justify-between items-center border-b border-brand-border pb-3">
+                <h3 class="text-lg font-black uppercase text-white"><i class="fa-solid fa-pen-to-square text-brand-cyan mr-2"></i>Modifica Evento</h3>
+                <button id="btn-close-edit-event" type="button" class="text-gray-400 hover:text-white text-xl"><i class="fa-solid fa-xmark"></i></button>
+            </div>
+            <form id="form-edit-event" class="space-y-4">
+                <input type="hidden" id="edit-event-id">
+                <input id="edit-event-title" required placeholder="Nome evento" class="w-full px-3 py-2.5 bg-brand-dark border border-brand-border rounded-xl text-white text-xs">
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-3"><input id="edit-event-datetime" type="datetime-local" required class="w-full px-3 py-2.5 bg-brand-dark border border-brand-border rounded-xl text-white text-xs"><input id="edit-event-location" placeholder="Luogo" class="w-full px-3 py-2.5 bg-brand-dark border border-brand-border rounded-xl text-white text-xs"></div>
+                <input id="edit-event-capacity" type="number" min="1" required class="w-full px-3 py-2.5 bg-brand-dark border border-brand-border rounded-xl text-white text-xs">
+                <textarea id="edit-event-description" rows="4" placeholder="Descrizione" class="w-full px-3 py-2.5 bg-brand-dark border border-brand-border rounded-xl text-white text-xs"></textarea>
+                <div class="flex justify-end gap-2"><button type="button" id="btn-cancel-edit-event" class="px-4 py-2.5 bg-brand-dark border border-brand-border text-gray-300 rounded-xl text-xs font-bold uppercase">Annulla</button><button type="submit" class="btn-gradient text-black font-black px-5 py-2.5 rounded-xl text-xs uppercase">Salva Modifiche</button></div>
+            </form>
+        </div>
+    </div>
+
     <script src="../js/config.js"></script>
     <script src="../js/notifications.js"></script>
     <script src="../js/chat.js"></script>
@@ -410,6 +455,7 @@
     <script src="../js/playlists.js"></script>
     <script src="../js/admin.js"></script>
     <script src="../js/attendance.js"></script>
+    <script src="../js/events.js"></script>
     <script>
         document.addEventListener('DOMContentLoaded', async () => {
             try {
