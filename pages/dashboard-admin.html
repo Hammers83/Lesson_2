@@ -179,6 +179,21 @@
             </form>
         </div>
 
+        <!-- STORICO PRESENZE -->
+        <div class="glass-panel p-6 rounded-3xl space-y-4 border-l-4 border-l-brand-lime">
+            <div class="flex flex-wrap justify-between items-center gap-3 border-b border-brand-border pb-3">
+                <div>
+                    <h3 class="text-lg font-black uppercase text-white flex items-center gap-2">
+                        <i class="fa-solid fa-clipboard-check text-brand-lime"></i> Storico Presenze
+                    </h3>
+                    <p class="text-[10px] text-gray-500 mt-1">Registro delle presenze confermate per ogni lezione, comprese partecipanti extra e new entry.</p>
+                </div>
+            </div>
+            <div id="attendance-history-container" class="grid grid-cols-1 md:grid-cols-2 gap-3">
+                <p class="text-xs text-gray-500 italic">Caricamento storico...</p>
+            </div>
+        </div>
+
         <!-- GRAFICI ANALYTICS -->
         <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
             <div class="glass-panel p-6 rounded-3xl">
@@ -326,6 +341,33 @@
         </div>
     </div>
 
+    <!-- MODALE CONFERMA PRESENZE -->
+    <div id="modal-attendance" class="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
+        <div class="bg-brand-card border border-brand-border p-6 rounded-3xl max-w-2xl w-full max-h-[90vh] overflow-y-auto space-y-4 shadow-2xl relative">
+            <div class="flex justify-between items-center border-b border-brand-border pb-3">
+                <div>
+                    <h3 class="text-lg font-black uppercase text-white flex items-center gap-2">
+                        <i class="fa-solid fa-user-check text-brand-lime"></i> Conferma Presenze
+                    </h3>
+                    <p id="attendance-lesson-title" class="text-[10px] text-brand-cyan mt-1 font-bold"></p>
+                </div>
+                <button type="button" onclick="document.getElementById('modal-attendance').classList.add('hidden')" class="text-gray-400 hover:text-white text-xl" aria-label="Chiudi">
+                    <i class="fa-solid fa-xmark"></i>
+                </button>
+            </div>
+            <input type="hidden" id="attendance-lesson-id">
+            <div id="attendance-list" class="space-y-3"></div>
+            <div class="flex justify-end gap-3 pt-2 border-t border-brand-border">
+                <button type="button" onclick="document.getElementById('modal-attendance').classList.add('hidden')" class="px-4 py-2.5 bg-brand-dark border border-brand-border text-gray-300 rounded-xl text-xs font-bold uppercase">
+                    Chiudi
+                </button>
+                <button type="button" onclick="saveAttendance()" class="px-5 py-2.5 btn-gradient text-black font-black uppercase text-xs rounded-xl">
+                    <i class="fa-solid fa-floppy-disk"></i> Salva Presenze
+                </button>
+            </div>
+        </div>
+    </div>
+
     <!-- SCRIPT APPLICATION LOGIC -->
     <script src="../js/config.js"></script>
     <script src="../js/notifications.js"></script>
@@ -333,6 +375,7 @@
     <script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js"></script>
     <script src="../js/playlists.js"></script>
     <script src="../js/admin.js"></script>
+    <script src="../js/attendance.js"></script>
     <script>
         document.addEventListener('DOMContentLoaded', async () => {
             try {
