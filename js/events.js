@@ -233,3 +233,15 @@ window.toggleEventBooking = async function(eventId, userId) {
         alert('Impossibile completare l’iscrizione: ' + error.message);
     }
 };
+
+document.addEventListener('DOMContentLoaded', function() {
+    const createModal = document.getElementById('modal-create-event');
+    const editModal = document.getElementById('modal-edit-event');
+    document.getElementById('btn-open-create-event-modal')?.addEventListener('click', () => createModal?.classList.remove('hidden'));
+    document.getElementById('btn-close-create-event')?.addEventListener('click', () => createModal?.classList.add('hidden'));
+    document.getElementById('btn-cancel-create-event')?.addEventListener('click', () => createModal?.classList.add('hidden'));
+    document.getElementById('btn-close-edit-event')?.addEventListener('click', () => editModal?.classList.add('hidden'));
+    document.getElementById('btn-cancel-edit-event')?.addEventListener('click', () => editModal?.classList.add('hidden'));
+    document.getElementById('form-create-event')?.addEventListener('submit', handleCreateEvent);
+    document.getElementById('form-edit-event')?.addEventListener('submit', handleUpdateEvent);
+});
