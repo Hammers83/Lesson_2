@@ -170,6 +170,12 @@ async function handleAuthSubmit(e) {
 }
 
 async function handleLogin() {
+    if (!window.supabaseClient || !window.supabaseClient.auth) {
+        showAuthError('Il servizio di accesso non è stato inizializzato. Ricarica la pagina.');
+        console.error('Supabase client non disponibile:', window.supabaseClient);
+        return;
+    }
+
     const email = document.getElementById('auth-email').value.trim();
     const password = document.getElementById('auth-password').value;
 
