@@ -157,6 +157,13 @@ async function loadAvailableLessons(userId, profile = {}) {
 
 // Gestione Prenotazioni
 window.toggleBooking = async function(lessonId, userId, isBooked) {
+    // Annullamento temporaneamente disabilitato anche a livello logico.
+    // Per ripristinarlo in futuro basta rimuovere questo blocco.
+    if (isBooked) {
+        alert("L'annullamento della prenotazione è temporaneamente disabilitato.");
+        return;
+    }
+
     const sb = window.supabaseClient;
 
     try {
