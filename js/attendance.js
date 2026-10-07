@@ -6,7 +6,7 @@ async function loadAttendanceHistory() {
     const sb = getSupabase();
     const result = await sb
         .from('attendance_records')
-        .select('id,status,guest_name,checked_at,lesson_id,lessons(title,datetime),profiles(nome,cognome)')
+        .select('id,status,guest_name,checked_at,lesson_id,user_id')
         .order('checked_at', { ascending: false })
         .limit(200);
 
@@ -23,7 +23,7 @@ async function loadAttendanceHistory() {
 
     const grouped = {};
     result.data.forEach(function(row) {
-        const lesson = row.lessons || {};
+        const lesson = (window.lessonsData || []).find(function(l) { return l.id === row.lesson_id; }) || {};
         const key = row.lesson_id || row.id;
         if (!grouped[key]) {
             grouped[key] = { title: lesson.title || 'Lezione', datetime: lesson.datetime, rows: [] };
@@ -50,8 +50,11 @@ async function loadAttendanceHistory() {
             '</div>' +
             '<div class="space-y-1.5">' +
                 group.rows.map(function(row) {
-                    const name = row.profiles
-                        ? ((row.profiles.nome || '') + ' ' + (row.profiles.cognome || '')).trim()
+                    const profile = row.user_id
+                        ? (window.lessonsData || []).flatMap(function(l) { return (l.bookings || []).map(function(b) { return b.profiles; }); }).find(function(p) { return p && p.id === row.user_id; })
+                        : null;
+                    const name = profile
+                        ? ((profile.nome || '') + ' ' + (profile.cognome || '')).trim()
                         : (row.guest_name || 'Partecipante');
                     const icon = row.status === 'present' ? 'fa-circle-check text-brand-lime' : 'fa-circle-xmark text-brand-pink';
                     const type = row.profiles ? 'Iscritta' : 'Ospite / New entry';
