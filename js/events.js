@@ -466,6 +466,8 @@ document.addEventListener('DOMContentLoaded', function() {
     document.getElementById('btn-cancel-create-event')?.addEventListener('click', () => createModal?.classList.add('hidden'));
     document.getElementById('btn-close-edit-event')?.addEventListener('click', () => editModal?.classList.add('hidden'));
     document.getElementById('btn-cancel-edit-event')?.addEventListener('click', () => editModal?.classList.add('hidden'));
+    document.getElementById('btn-close-participants')?.addEventListener('click', () => document.getElementById('modal-participants')?.classList.add('hidden'));
+    document.getElementById('btn-close-participants-bottom')?.addEventListener('click', () => document.getElementById('modal-participants')?.classList.add('hidden'));
     document.getElementById('form-create-event')?.addEventListener('submit', handleCreateEvent);
     document.getElementById('form-edit-event')?.addEventListener('submit', handleUpdateEvent);
 });
