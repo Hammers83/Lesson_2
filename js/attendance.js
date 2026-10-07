@@ -97,22 +97,50 @@ window.openAttendanceModal = async function(lessonId) {
         if (r.user_id) recordByUser[r.user_id] = r;
     });
 
-    let html = '<div class="space-y-2">';
-    if ((bookingsResult.data || []).length === 0) {
-        html += '<p class="text-xs text-gray-500">Nessuna prenotazione per questa lezione.</p>';
-    } else {
-        (bookingsResult.data || []).forEach(function(b) {
-            const p = b.profiles || {};
-            const name = ((p.nome || '') + ' ' + (p.cognome || '')).trim() || 'Allieva';
-            const record = recordByUser[b.user_id];
-            const checked = record ? record.status === 'present' : false;
-            html += '<label class="flex items-center justify-between gap-3 bg-brand-card border border-brand-border rounded-xl p-3 cursor-pointer">' +
-                '<span class="text-sm font-bold text-white">' + escapeHtml(name) + ' <span class="text-[9px] text-gray-500 uppercase ml-1">prenotata</span></span>' +
-                '<input type="checkbox" class="attendance-registered w-5 h-5" data-user-id="' + escapeHtml(b.user_id) + '"' + (checked ? ' checked' : '') + '>' +
-                '</label>';
-        });
+    const allProfilesResult = await sb.from('profiles').select('id,nome,cognome').eq('is_admin', false).order('nome', { ascending: true });
+    if (allProfilesResult.error) {
+        console.error('Errore caricamento elenco allieve:', allProfilesResult.error);
+        list.innerHTML = '<p class="text-xs text-brand-pink">Errore nel caricamento dell’elenco allieve.</p>';
+        modal.classList.remove('hidden');
+        return;
     }
+
+    const bookedUserIds = new Set((bookingsResult.data || []).map(function(b) { return b.user_id; }));
+    const recordedUserIds = new Set((recordsResult.data || []).filter(function(r) { return r.user_id; }).map(function(r) { return r.user_id; }));
+    const availableProfiles = (allProfilesResult.data || []).filter(function(p) {
+        return !bookedUserIds.has(p.id) && !recordedUserIds.has(p.id);
+    });
+
+    let html = '<div class="space-y-2" id="attendance-registered-list">';
+    if ((bookingsResult.data || []).length === 0) {
+        html += '<p class="text-xs text-gray-500" id="attendance-no-bookings">Nessuna prenotazione per questa lezione.</p>';
+    }
+    (bookingsResult.data || []).forEach(function(b) {
+        const p = b.profiles || {};
+        const name = ((p.nome || '') + ' ' + (p.cognome || '')).trim() || 'Allieva';
+        const record = recordByUser[b.user_id];
+        const checked = record ? record.status === 'present' : false;
+        html += '<label class="flex items-center justify-between gap-3 bg-brand-card border border-brand-border rounded-xl p-3 cursor-pointer">' +
+            '<span class="text-sm font-bold text-white">' + escapeHtml(name) + ' <span class="text-[9px] text-gray-500 uppercase ml-1">prenotata</span></span>' +
+            '<input type="checkbox" class="attendance-registered w-5 h-5" data-user-id="' + escapeHtml(b.user_id) + '"' + (checked ? ' checked' : '') + '>' +
+            '</label>';
+    });
     html += '</div>';
+
+    html += '<div class="mt-3 bg-brand-card border border-brand-border rounded-xl p-3">' +
+        '<div class="text-[10px] font-black uppercase text-brand-cyan mb-2">Aggiungi allieva iscritta</div>' +
+        '<div class="flex gap-2">' +
+            '<select id="attendance-registered-select" class="flex-1 bg-brand-dark border border-brand-border rounded-lg px-3 py-2 text-xs text-white">' +
+                '<option value="">Seleziona un’allieva...</option>' +
+                availableProfiles.map(function(p) {
+                    const name = ((p.nome || '') + ' ' + (p.cognome || '')).trim();
+                    return '<option value="' + escapeHtml(p.id) + '">' + escapeHtml(name) + '</option>';
+                }).join('') +
+            '</select>' +
+            '<button type="button" id="btn-add-registered-attendance" class="px-3 py-2 bg-brand-lime/10 border border-brand-lime/30 text-brand-lime rounded-lg text-[10px] font-black uppercase">Aggiungi</button>' +
+        '</div>' +
+        '<p class="text-[10px] text-gray-500 mt-2">Puoi aggiungere anche un’allieva registrata che non aveva prenotato la lezione.</p>' +
+    '</div>';
 
     const guests = (recordsResult.data || []).filter(function(r) { return !r.user_id; });
     html += '<div class="border-t border-brand-border pt-4 mt-4">' +
