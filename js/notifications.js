@@ -176,6 +176,28 @@ window.markAllNotificationsAsRead = async function() {
     await loadNotifications(userId);
 };
 
+window.clearReadNotifications = async function() {
+    const userId = window.notificationState?.userId || window.currentSessionData?.user?.id;
+    if (!userId) return;
+
+    const sb = notificationClient();
+    if (!sb) return;
+
+    const { error } = await sb
+        .from('notifications')
+        .delete()
+        .eq('user_id', userId)
+        .eq('is_read', true);
+
+    if (error) {
+        console.error('Errore pulizia notifiche lette:', error);
+        alert('Non è stato possibile pulire le notifiche lette.');
+        return;
+    }
+
+    await loadNotifications(userId);
+};
+
 
 async function checkCertExpirationNotification(userId, profile) {
     const dataScad = profile?.medical_certificate_expiration || profile?.certificato_scadenza;
