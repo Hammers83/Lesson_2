@@ -64,3 +64,39 @@ async function logout() {
     }
     window.location.href = "../index.html";
 }
+
+function renderNavbar(profile) {
+    var nav = document.getElementById("nav-links");
+    if (!nav) return;
+
+    var name = "";
+    if (profile) {
+        name = ((profile.nome || "") + " " + (profile.cognome || "")).trim();
+    }
+
+    var dashboardLabel = profile && profile.is_admin ? "Istruttore" : "Allieva";
+    var avatarUrl = profile && profile.avatar_url
+        ? profile.avatar_url
+        : "https://ui-avatars.com/api/?name=" + encodeURIComponent(name || dashboardLabel) + "&background=CCFF00&color=000";
+
+    nav.innerHTML =
+        '<div class="flex items-center gap-2">' +
+            '<img id="nav-avatar-img" src="' + avatarUrl + '" alt="Profilo" class="w-9 h-9 rounded-xl object-cover border border-brand-border">' +
+            '<div class="hidden sm:block text-right leading-tight">' +
+                '<div class="text-xs font-black text-white">' + escapeNavbarText(name || dashboardLabel) + '</div>' +
+                '<div class="text-[9px] uppercase font-bold text-gray-500">' + dashboardLabel + '</div>' +
+            '</div>' +
+        '</div>' +
+        '<button type="button" onclick="logout()" class="px-3 py-2 bg-brand-dark border border-brand-border text-gray-300 hover:text-white hover:border-brand-pink rounded-xl text-xs font-black uppercase transition flex items-center gap-2" title="Esci e accedi con un altro account">' +
+            '<i class="fa-solid fa-right-from-bracket"></i><span class="hidden sm:inline">Esci</span>' +
+        '</button>';
+}
+
+function escapeNavbarText(value) {
+    return String(value || "")
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;")
+        .replace(/'/g, "&#039;");
+}
