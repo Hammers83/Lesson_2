@@ -117,7 +117,25 @@
             </div>
         </div>
 
-        <!-- Chat -->
+        <!-- MODALE PARTECIPANTI -->
+    <div id="modal-participants" class="hidden fixed inset-0 z-50 bg-black/70 backdrop-blur-sm flex items-center justify-center p-4">
+        <div class="w-full max-w-md bg-brand-card border border-brand-border rounded-3xl shadow-2xl p-6">
+            <div class="flex justify-between items-center border-b border-brand-border pb-3 mb-4">
+                <h3 id="participants-modal-title" class="text-lg font-black uppercase text-white flex items-center gap-2">
+                    <i class="fa-solid fa-users text-brand-cyan"></i> Chi viene?
+                </h3>
+                <button type="button" id="btn-close-participants" class="text-gray-400 hover:text-white text-lg" aria-label="Chiudi">
+                    <i class="fa-solid fa-xmark"></i>
+                </button>
+            </div>
+            <div id="participants-modal-list" class="max-h-80 overflow-y-auto pr-1"></div>
+            <button type="button" id="btn-close-participants-bottom" class="w-full mt-4 py-2.5 bg-brand-dark border border-brand-border text-gray-300 rounded-xl text-xs font-black uppercase hover:text-white">
+                Chiudi
+            </button>
+        </div>
+    </div>
+
+    <!-- Chat -->
         <div class="glass-panel p-6 rounded-3xl space-y-4">
             <div class="flex justify-between items-center border-b border-brand-border pb-3">
                 <h3 class="text-lg font-black uppercase text-white flex items-center gap-2">
