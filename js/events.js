@@ -332,8 +332,21 @@ async function loadAvailableEvents(userId) {
         return;
     }
 
+    const eventIds = events.map(e => e.id);
+    const participantsResult = await sb.rpc('get_event_participants', { p_event_ids: eventIds });
+    if (participantsResult.error) {
+        console.error('Errore caricamento partecipanti eventi:', participantsResult.error);
+    }
+
+    const participantsByEvent = {};
+    (participantsResult.data || []).forEach(function(p) {
+        if (!participantsByEvent[p.event_id]) participantsByEvent[p.event_id] = [];
+        participantsByEvent[p.event_id].push(p);
+    });
+
     container.innerHTML = events.map(function(event) {
         const bookings = event.event_bookings || [];
+        const participants = participantsByEvent[event.id] || [];
         const isBooked = bookings.some(b => b.user_id === userId);
         const bookedCount = bookings.length;
         const capacity = Number(event.capacity || 20);
@@ -362,6 +375,7 @@ async function loadAvailableEvents(userId) {
                 '<span class="text-xs uppercase font-bold text-brand-pink">' + formatEventDate(event.datetime) + ' · ' + formatEventTime(event.datetime) + '</span>' +
                 '<span class="text-[10px] px-2 py-0.5 rounded-full font-bold ' + (bookedCount >= capacity ? 'bg-brand-pink/20 text-brand-pink border border-brand-pink/40' : 'bg-brand-lime/20 text-brand-lime border border-brand-lime/40') + '">' + bookedCount + '/' + capacity + ' Posti</span></div>' +
                 '<h4 class="text-base font-black text-white">' + eventEscapeHtml(event.title) + '</h4>' +
+                '<button type="button" onclick="openParticipantsModal(\'event\', \'' + event.id + '\')" class="mt-3 text-[10px] font-black uppercase text-brand-cyan hover:underline"><i class="fa-solid fa-users mr-1"></i> Chi viene? (' + participants.length + ')</button>' +
                 eventCardMeta(event) +
                 (event.description ? '<p class="text-xs text-gray-300 mt-2 whitespace-pre-line leading-relaxed">' + eventEscapeHtml(event.description) + '</p>' : '') +
                 (event.registration_deadline ? '<p class="text-[10px] text-gray-500 mt-2">Iscrizioni fino al ' + formatEventDate(event.registration_deadline) + ' · ' + formatEventTime(event.registration_deadline) + '</p>' : '') +
