@@ -10,7 +10,7 @@ function eventEscapeHtml(value) {
 
 function eventSafeUrl(value) {
     const url = String(value || '').trim();
-    return /^https?:\\/\\//i.test(url) ? url : '';
+    return /^https?:\/\//i.test(url) ? url : '';
 }
 
 function formatEventDate(value) {
