@@ -67,29 +67,37 @@ function setAvatarImage(imgEl, profile = {}) {
 }
 
 async function uploadProfileAvatar(file, profile) {
-    if (!file || !profile?.id) throw new Error('File o profilo non valido.');
+    if (!file || !profile || !profile.id) {
+        throw new Error('File o profilo non valido.');
+    }
 
     const allowedTypes = ['image/jpeg', 'image/png', 'image/webp', 'image/gif'];
-    if (!allowedTypes.includes(file.type)) {
+    if (allowedTypes.indexOf(file.type) === -1) {
         throw new Error('Formato non supportato. Usa JPG, PNG, WEBP o GIF.');
     }
+
     if (file.size > 5 * 1024 * 1024) {
-        throw new Error('L'immagine è troppo grande. Il limite è 5 MB.');
+        throw new Error("L'immagine è troppo grande. Il limite è 5 MB.");
     }
 
     const sb = window.supabaseClient;
-    const { data: sessionData, error: sessionError } = await sb.auth.getSession();
-    if (sessionError) throw new Error('Impossibile verificare la sessione utente.');
-    const authUser = sessionData?.session?.user;
+    if (!sb) {
+        throw new Error('Client Supabase non inizializzato. Ricarica la pagina.');
+    }
 
-    if (!authUser?.id) {
+    const sessionResult = await sb.auth.getSession();
+    if (sessionResult.error) {
+        throw new Error('Impossibile verificare la sessione utente.');
+    }
+
+    const session = sessionResult.data && sessionResult.data.session;
+    const authUser = session && session.user;
+
+    if (!authUser || !authUser.id) {
         throw new Error('Sessione non valida. Effettua nuovamente il login.');
     }
 
-    // Storage RLS autorizza il percorso in base a auth.uid(), quindi
-    // usiamo sempre l'ID dell'utente autenticato come prima cartella.
     const userId = authUser.id;
-
     const extensionMap = {
         'image/jpeg': 'jpg',
         'image/png': 'png',
@@ -97,15 +105,15 @@ async function uploadProfileAvatar(file, profile) {
         'image/gif': 'gif'
     };
     const extension = extensionMap[file.type] || 'jpg';
-    const path = `${userId}/avatar.${extension}`;
+    const path = userId + '/avatar.' + extension;
 
-    // Elimina eventuali vecchie estensioni per evitare di lasciare file inutilizzati.
     const oldPaths = ['jpg', 'png', 'webp', 'gif']
-        .map(ext => `${userId}/avatar.${ext}`)
-        .filter(oldPath => oldPath !== path);
-    await sb.storage.from(AVATAR_BUCKET).remove(oldPaths).catch(() => {});
+        .map(function(ext) { return userId + '/avatar.' + ext; })
+        .filter(function(oldPath) { return oldPath !== path; });
 
-    const { error: uploadError } = await sb.storage
+    await sb.storage.from(AVATAR_BUCKET).remove(oldPaths).catch(function() {});
+
+    const uploadResult = await sb.storage
         .from(AVATAR_BUCKET)
         .upload(path, file, {
             upsert: true,
@@ -113,28 +121,31 @@ async function uploadProfileAvatar(file, profile) {
             cacheControl: '3600'
         });
 
-    if (uploadError) {
-        throw new Error(`Impossibile caricare l'immagine: ${uploadError.message}`);
+    if (uploadResult.error) {
+        throw new Error('Impossibile caricare l'immagine: ' + uploadResult.error.message);
     }
 
-    const { data } = sb.storage.from(AVATAR_BUCKET).getPublicUrl(path);
-    if (!data?.publicUrl) throw new Error("URL dell'immagine non disponibile.");
+    const publicResult = sb.storage.from(AVATAR_BUCKET).getPublicUrl(path);
+    const publicUrl = publicResult && publicResult.data && publicResult.data.publicUrl;
 
-    // Il profilo appartiene all'utente autenticato: aggiorniamo usando auth.uid()
-    // invece di fidarci di un profile.id eventualmente non sincronizzato.
-    const avatarUrl = `${data.publicUrl}?v=${Date.now()}`;
-    const { data: updatedProfile, error: updateError } = await sb
+    if (!publicUrl) {
+        throw new Error("URL dell'immagine non disponibile.");
+    }
+
+    const avatarUrl = publicUrl + '?v=' + Date.now();
+
+    const profileResult = await sb
         .from('profiles')
         .update({ avatar_url: avatarUrl })
         .eq('id', userId)
         .select('*')
         .single();
 
-    if (updateError) {
-        throw new Error(`Impossibile salvare il profilo: ${updateError.message}`);
+    if (profileResult.error) {
+        throw new Error('Impossibile salvare il profilo: ' + profileResult.error.message);
     }
 
-    return updatedProfile;
+    return profileResult.data;
 }
 async function removeProfileAvatar(profile) {
     if (!profile?.id) throw new Error('Profilo non valido.');
