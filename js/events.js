@@ -117,8 +117,8 @@ async function loadAdminEvents() {
                 '<div><h4 class="text-base font-black text-white">' + eventEscapeHtml(event.title) + '</h4>' +
                 '<span class="text-xs text-brand-pink font-bold">' + formatEventDate(event.datetime) + ' · ' + formatEventTime(event.datetime) + '</span></div>' +
                 '<div class="flex items-center gap-2 shrink-0">' +
-                    '<button onclick="openEditEventModal(\\'' + event.id + '\\')" class="px-2.5 py-1 bg-brand-cyan/10 hover:bg-brand-cyan hover:text-black text-brand-cyan border border-brand-cyan/40 text-xs font-bold rounded-lg"><i class="fa-solid fa-pen"></i></button>' +
-                    '<button onclick="deleteEvent(\\'' + event.id + '\\')" class="px-2.5 py-1 bg-brand-pink/10 hover:bg-brand-pink text-brand-pink hover:text-white border border-brand-pink/40 text-xs font-bold rounded-lg" title="Elimina evento"><i class="fa-solid fa-trash"></i></button>' +
+                    '<button onclick="openEditEventModal(\'' + event.id + '\')" class="px-2.5 py-1 bg-brand-cyan/10 hover:bg-brand-cyan hover:text-black text-brand-cyan border border-brand-cyan/40 text-xs font-bold rounded-lg"><i class="fa-solid fa-pen"></i></button>' +
+                    '<button onclick="deleteEvent(\'' + event.id + '\')" class="px-2.5 py-1 bg-brand-pink/10 hover:bg-brand-pink text-brand-pink hover:text-white border border-brand-pink/40 text-xs font-bold rounded-lg" title="Elimina evento"><i class="fa-solid fa-trash"></i></button>' +
                 '</div>' +
             '</div>' +
             '<div class="flex flex-wrap gap-2">' +
@@ -135,7 +135,7 @@ async function loadAdminEvents() {
                         return '<li class="text-xs bg-brand-card p-2 rounded-xl flex justify-between items-center gap-2 border border-brand-border/50">' +
                             '<span class="font-bold text-white"><i class="fa-solid fa-user text-brand-pink mr-1.5"></i>' + eventEscapeHtml((student.nome || '') + ' ' + (student.cognome || '')) + '</span>' +
                             '<div class="flex items-center gap-2"><span class="text-[10px] text-gray-400">' + eventEscapeHtml(student.telefono || student.email || '') + '</span>' +
-                            '<button onclick="removeEventBooking(\\'' + event.id + '\\', \\'' + (booking?.user_id || '') + '\\')" class="text-brand-pink hover:text-white" title="Rimuovi iscrizione"><i class="fa-solid fa-user-minus"></i></button></div></li>';
+                            '<button onclick="removeEventBooking(\'' + event.id + '\', \'' + (booking?.user_id || '') + '\')" class="text-brand-pink hover:text-white" title="Rimuovi iscrizione"><i class="fa-solid fa-user-minus"></i></button></div></li>';
                     }).join('') + '</ul>' : '<p class="text-xs italic text-gray-500">Nessuna iscrizione al momento.</p>') +
             '</div></div>';
     }).join('');
@@ -316,7 +316,7 @@ async function loadAvailableEvents(userId) {
         } else if (!canBook) {
             buttonHtml = '<button disabled class="w-full py-2.5 bg-gray-700 text-gray-400 text-xs uppercase rounded-xl cursor-not-allowed">Sold Out</button>';
         } else {
-            buttonHtml = '<button onclick="toggleEventBooking(\\'' + event.id + '\\', \\'' + userId + '\\')" class="w-full py-2.5 bg-brand-pink text-white font-black text-xs uppercase rounded-xl transition hover:opacity-90"><i class="fa-solid fa-calendar-plus mr-1"></i> Iscriviti all’evento</button>';
+            buttonHtml = '<button onclick="toggleEventBooking(\'' + event.id + '\', \'' + userId + '\')" class="w-full py-2.5 bg-brand-pink text-white font-black text-xs uppercase rounded-xl transition hover:opacity-90"><i class="fa-solid fa-calendar-plus mr-1"></i> Iscriviti all’evento</button>';
         }
 
         return '<div class="bg-brand-dark p-5 rounded-2xl border border-brand-pink/30 flex flex-col justify-between space-y-4">' +
