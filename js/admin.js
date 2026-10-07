@@ -129,6 +129,7 @@ async function loadAdminDashboard() {
     await loadStudentsTable();
     await renderAnalytics();
     await loadAdminLessons();
+    if (typeof loadAdminEvents === 'function') await loadAdminEvents();
     if (typeof loadAttendanceHistory === 'function') await loadAttendanceHistory();
 }
 
