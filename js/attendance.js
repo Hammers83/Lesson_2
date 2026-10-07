@@ -4,14 +4,20 @@ async function loadAttendanceHistory() {
     if (!container) return;
 
     const sb = getSupabase();
-    const result = await sb
-        .from('attendance_records')
-        .select('id,status,guest_name,checked_at,lesson_id,user_id')
-        .order('checked_at', { ascending: false })
-        .limit(200);
+    const [result, profilesResult] = await Promise.all([
+        sb
+            .from('attendance_records')
+            .select('id,status,guest_name,checked_at,lesson_id,user_id')
+            .order('checked_at', { ascending: false })
+            .limit(200),
+        sb
+            .from('profiles')
+            .select('id,nome,cognome')
+            .eq('is_admin', false)
+    ]);
 
-    if (result.error) {
-        console.error('Errore storico presenze:', result.error);
+    if (result.error || profilesResult.error) {
+        console.error('Errore storico presenze:', result.error || profilesResult.error);
         container.innerHTML = '<p class="text-xs text-brand-pink">Impossibile caricare lo storico. Applica prima la migrazione Supabase delle presenze.</p>';
         return;
     }
@@ -20,6 +26,11 @@ async function loadAttendanceHistory() {
         container.innerHTML = '<p class="text-xs text-gray-500 italic">Nessuna presenza registrata.</p>';
         return;
     }
+
+    const profilesById = {};
+    (profilesResult.data || []).forEach(function(profile) {
+        profilesById[profile.id] = profile;
+    });
 
     const grouped = {};
     result.data.forEach(function(row) {
@@ -50,9 +61,7 @@ async function loadAttendanceHistory() {
             '</div>' +
             '<div class="space-y-1.5">' +
                 group.rows.map(function(row) {
-                    const profile = row.user_id
-                        ? (window.lessonsData || []).flatMap(function(l) { return (l.bookings || []).map(function(b) { return b.profiles; }); }).find(function(p) { return p && p.id === row.user_id; })
-                        : null;
+                    const profile = row.user_id ? profilesById[row.user_id] : null;
                     const name = profile
                         ? ((profile.nome || '') + ' ' + (profile.cognome || '')).trim()
                         : (row.guest_name || 'Partecipante');
