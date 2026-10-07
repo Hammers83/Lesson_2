@@ -129,6 +129,7 @@ async function loadAdminDashboard() {
     await loadStudentsTable();
     await renderAnalytics();
     await loadAdminLessons();
+    if (typeof loadAttendanceHistory === 'function') await loadAttendanceHistory();
 }
 
 async function loadStudentsTable() {
@@ -252,6 +253,7 @@ async function loadAdminLessons() {
                         <span class="text-xs text-brand-cyan font-bold">${formattedDate} - ${formattedTime}</span>
                     </div>
                     <div class="flex items-center gap-2">
+                        <button onclick="openAttendanceModal('${lesson.id}')" class="px-2.5 py-1 bg-brand-lime/10 hover:bg-brand-lime hover:text-black text-brand-lime border border-brand-lime/40 text-xs font-bold rounded-lg transition flex items-center gap-1"><i class="fa-solid fa-clipboard-check"></i> Presenze</button>
                         <button onclick="openEditLessonModal('${lesson.id}')" class="px-2.5 py-1 bg-brand-card hover:bg-brand-cyan hover:text-black text-brand-cyan border border-brand-cyan/40 text-xs font-bold rounded-lg transition flex items-center gap-1">
                             <i class="fa-solid fa-pen"></i> Modifica
                         </button>
