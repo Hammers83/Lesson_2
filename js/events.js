@@ -158,6 +158,23 @@ window.openEditEventModal = function(eventId) {
     document.getElementById('modal-edit-event').classList.remove('hidden');
 };
 
+async function uploadEventCover(file, userId) {
+    if (!file) return null;
+    if (!file.type || !file.type.startsWith('image/')) {
+        throw new Error('La copertina deve essere un file immagine.');
+    }
+    if (file.size > 5 * 1024 * 1024) {
+        throw new Error('La copertina non può superare 5 MB.');
+    }
+    const sb = getSupabase();
+    const ext = (file.name.split('.').pop() || 'jpg').toLowerCase().replace(/[^a-z0-9]/g, '') || 'jpg';
+    const path = userId + '/' + Date.now() + '_' + Math.random().toString(36).slice(2) + '.' + ext;
+    const { error } = await sb.storage.from('event-covers').upload(path, file, { upsert: false, contentType: file.type });
+    if (error) throw error;
+    const { data } = sb.storage.from('event-covers').getPublicUrl(path);
+    return data?.publicUrl || null;
+}
+
 async function handleCreateEvent(e) {
     e.preventDefault();
     const sb = getSupabase();
@@ -173,7 +190,8 @@ async function handleCreateEvent(e) {
     const deadlineValue = document.getElementById('event-deadline').value;
     const registration_deadline = deadlineValue ? new Date(deadlineValue).toISOString() : null;
     const status = document.getElementById('event-status').value;
-    const cover_url = document.getElementById('event-cover').value.trim() || null;
+    let cover_url = document.getElementById('event-cover').value.trim() || null;
+    const coverFile = document.getElementById('event-cover-file')?.files?.[0];
 
     if (!userId || !title || !datetime || !capacity || capacity < 1 || !status) {
         alert('Compila i campi obbligatori.');
@@ -183,6 +201,15 @@ async function handleCreateEvent(e) {
     if (registration_deadline && new Date(registration_deadline) > new Date(datetime)) {
         alert('La scadenza iscrizioni non può essere dopo la data dell’evento.');
         return;
+    }
+
+    if (coverFile) {
+        try {
+            cover_url = await uploadEventCover(coverFile, userId);
+        } catch (uploadError) {
+            alert('Errore caricamento copertina: ' + uploadError.message);
+            return;
+        }
     }
 
     const { error } = await sb.from('events').insert([{
@@ -219,7 +246,8 @@ async function handleUpdateEvent(e) {
     const deadlineValue = document.getElementById('edit-event-deadline').value;
     const registration_deadline = deadlineValue ? new Date(deadlineValue).toISOString() : null;
     const status = document.getElementById('edit-event-status').value;
-    const cover_url = document.getElementById('edit-event-cover').value.trim() || null;
+    let cover_url = document.getElementById('edit-event-cover').value.trim() || null;
+    const coverFile = document.getElementById('edit-event-cover-file')?.files?.[0];
 
     if (!id || !title || !datetime || !capacity || capacity < 1 || !status) {
         alert('Compila i campi obbligatori.');
@@ -228,6 +256,15 @@ async function handleUpdateEvent(e) {
     if (registration_deadline && new Date(registration_deadline) > new Date(datetime)) {
         alert('La scadenza iscrizioni non può essere dopo la data dell’evento.');
         return;
+    }
+
+    if (coverFile) {
+        try {
+            cover_url = await uploadEventCover(coverFile, (typeof currentSessionData !== 'undefined' ? currentSessionData?.user?.id : null));
+        } catch (uploadError) {
+            alert('Errore caricamento copertina: ' + uploadError.message);
+            return;
+        }
     }
 
     const { error } = await sb.from('events').update({
