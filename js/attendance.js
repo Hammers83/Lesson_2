@@ -129,7 +129,7 @@ window.openAttendanceModal = async function(lessonId) {
             '<button type="button" class="attendance-remove-guest px-2 text-brand-pink" title="Rimuovi"><i class="fa-solid fa-xmark"></i></button></div>';
     });
 
-    html += '</div><p class="text-[10px] text-gray-500 mt-2">Inserisci anche un’allieva già iscritta che non aveva prenotato oppure una nuova partecipante non ancora registrata.</p></div>';
+    html += '</div><p class="text-[10px] text-gray-500 mt-2">Inserisci il nome completo. Se l’allieva è già registrata al sito, verrà riconosciuta automaticamente come allieva.</p></div>';
     list.innerHTML = html;
 
     document.getElementById('btn-add-attendance-guest').onclick = function() {
@@ -157,10 +157,35 @@ window.saveAttendance = async function() {
 
     const sb = getSupabase();
     const registered = Array.from(list.querySelectorAll('.attendance-registered'));
+    const profilesResult = await sb.from('profiles').select('id,nome,cognome').eq('is_admin', false);
+    if (profilesResult.error) {
+        alert('Errore nel controllo dell’elenco allieve: ' + profilesResult.error.message);
+        return;
+    }
+
+    const normalizeName = function(value) {
+        return String(value || '')
+            .normalize('NFD')
+            .replace(/[\u0300-\u036f]/g, '')
+            .toLowerCase()
+            .replace(/[^a-z0-9]+/g, ' ')
+            .trim()
+            .replace(/\s+/g, ' ');
+    };
+
+    const registeredProfiles = profilesResult.data || [];
     const guests = Array.from(list.querySelectorAll('.attendance-guest-row')).map(function(row) {
+        const guestName = row.querySelector('.attendance-guest-name').value.trim();
+        const status = row.querySelector('.attendance-guest-status').value;
+        const normalizedGuest = normalizeName(guestName);
+        const matched = registeredProfiles.find(function(profile) {
+            const fullName = normalizeName(((profile.nome || '') + ' ' + (profile.cognome || '')).trim());
+            return fullName && fullName === normalizedGuest;
+        });
         return {
-            guest_name: row.querySelector('.attendance-guest-name').value.trim(),
-            status: row.querySelector('.attendance-guest-status').value
+            guest_name: guestName,
+            status: status,
+            matched_user_id: matched ? matched.id : null
         };
     }).filter(function(g) { return g.guest_name; });
 
@@ -188,8 +213,27 @@ window.saveAttendance = async function() {
         }
     }
 
-    if (guests.length) {
-        const insertResult = await sb.from('attendance_records').insert(guests.map(function(g) {
+    const matchedGuests = guests.filter(function(g) { return g.matched_user_id; });
+    if (matchedGuests.length) {
+        const matchedPayload = matchedGuests.map(function(g) {
+            return {
+                lesson_id: lessonId,
+                user_id: g.matched_user_id,
+                status: g.status,
+                checked_by: currentSessionData.user.id,
+                checked_at: new Date().toISOString()
+            };
+        });
+        const matchedResult = await sb.from('attendance_records').upsert(matchedPayload, { onConflict: 'lesson_id,user_id' });
+        if (matchedResult.error) {
+            alert('Errore nel salvataggio delle allieve riconosciute: ' + matchedResult.error.message);
+            return;
+        }
+    }
+
+    const realGuests = guests.filter(function(g) { return !g.matched_user_id; });
+    if (realGuests.length) {
+        const insertResult = await sb.from('attendance_records').insert(realGuests.map(function(g) {
             return {
                 lesson_id: lessonId,
                 guest_name: g.guest_name,
