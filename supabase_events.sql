@@ -238,3 +238,52 @@ begin
         alter publication supabase_realtime add table public.event_bookings;
     end if;
 end $$;
+
+
+-- Partecipanti visibili alle allieve per favorire l'organizzazione condivisa
+-- del viaggio verso lezioni ed eventi. Nessun recapito viene esposto.
+drop function if exists public.get_lesson_participants(uuid[]);
+create or replace function public.get_lesson_participants(p_lesson_ids uuid[])
+returns table (
+    lesson_id uuid,
+    user_id uuid,
+    nome text,
+    cognome text
+)
+language sql
+security definer
+set search_path = public
+as $$
+    select b.lesson_id, p.id, p.nome, p.cognome
+    from public.bookings b
+    join public.profiles p on p.id = b.user_id
+    where b.lesson_id = any(p_lesson_ids)
+      and p.is_admin = false
+      and auth.uid() is not null;
+$$;
+
+drop function if exists public.get_event_participants(uuid[]);
+create or replace function public.get_event_participants(p_event_ids uuid[])
+returns table (
+    event_id uuid,
+    user_id uuid,
+    nome text,
+    cognome text
+)
+language sql
+security definer
+set search_path = public
+as $$
+    select eb.event_id, p.id, p.nome, p.cognome
+    from public.event_bookings eb
+    join public.profiles p on p.id = eb.user_id
+    where eb.event_id = any(p_event_ids)
+      and p.is_admin = false
+      and auth.uid() is not null;
+$$;
+
+revoke all on function public.get_lesson_participants(uuid[]) from public;
+grant execute on function public.get_lesson_participants(uuid[]) to authenticated;
+
+revoke all on function public.get_event_participants(uuid[]) from public;
+grant execute on function public.get_event_participants(uuid[]) to authenticated;
