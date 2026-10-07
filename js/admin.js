@@ -145,12 +145,12 @@ async function loadStudentsTable() {
 
     if (error) {
         console.error("Errore caricamento allieve:", error);
-        tbody.innerHTML = `<tr><td colspan="5" class="py-4 text-center text-brand-pink">Errore nel caricamento dei dati.</td></tr>`;
+        tbody.innerHTML = `<tr><td colspan="6" class="py-4 text-center text-brand-pink">Errore nel caricamento dei dati.</td></tr>`;
         return;
     }
 
     if (!profiles || profiles.length === 0) {
-        tbody.innerHTML = `<tr><td colspan="5" class="py-4 text-center text-gray-500">Nessuna allieva registrata.</td></tr>`;
+        tbody.innerHTML = `<tr><td colspan="6" class="py-4 text-center text-gray-500">Nessuna allieva registrata.</td></tr>`;
         return;
     }
 
@@ -194,6 +194,15 @@ async function loadStudentsTable() {
             }
         }
 
+        const dataNascita = p.data_nascita || p.dataNascita || p.birth_date || p.date_of_birth;
+        let dataNascitaHtml = '<span class="text-xs text-gray-500">Non indicata</span>';
+        if (dataNascita) {
+            const nascitaDate = new Date(dataNascita + (String(dataNascita).length === 10 ? 'T00:00:00' : ''));
+            if (!isNaN(nascitaDate.getTime())) {
+                dataNascitaHtml = '<span class="text-xs text-gray-300 font-bold">' + nascitaDate.toLocaleDateString('it-IT') + '</span>';
+            }
+        }
+
         const avatar = p.avatar_url ? escapeHtml(p.avatar_url) : `https://ui-avatars.com/api/?name=${encodeURIComponent(p.nome || 'A')}&background=CCFF00&color=000`;
 
         return `
@@ -203,6 +212,7 @@ async function loadStudentsTable() {
                 </td>
                 <td class="py-3 px-2 font-bold text-white">${escapeHtml(p.nome)} ${escapeHtml(p.cognome)}</td>
                 <td class="py-3 px-2 text-xs text-gray-400">${escapeHtml(p.email || '-')}<br><span class="text-gray-500">${escapeHtml(p.telefono)}</span></td>
+                <td class="py-3 px-2">${dataNascitaHtml}</td>
                 <td class="py-3 px-2">${badgeHtml}</td>
                 <td class="py-3 px-2">${docLinkHtml}</td>
             </tr>
@@ -431,3 +441,76 @@ async function renderAnalytics() {
         });
     }
 }
+
+
+window.openBirthdaysModal = async function() {
+    const modal = document.getElementById('modal-birthdays');
+    const list = document.getElementById('birthdays-list');
+    const label = document.getElementById('birthdays-today-label');
+    if (!modal || !list) return;
+
+    const today = new Date();
+    const day = today.getDate();
+    const month = today.getMonth() + 1;
+
+    if (label) {
+        label.textContent = today.toLocaleDateString('it-IT', {
+            weekday: 'long',
+            day: '2-digit',
+            month: 'long'
+        });
+    }
+
+    list.innerHTML = '<p class="text-xs text-gray-500">Controllo i compleanni...</p>';
+    modal.classList.remove('hidden');
+
+    const sb = getSupabase();
+    const result = await sb
+        .from('profiles')
+        .select('id,nome,cognome,data_nascita,birth_date,date_of_birth')
+        .eq('is_admin', false)
+        .order('nome', { ascending: true });
+
+    if (result.error) {
+        console.error('Errore caricamento compleanni:', result.error);
+        list.innerHTML = '<p class="text-xs text-brand-pink">Impossibile caricare i compleanni.</p>';
+        return;
+    }
+
+    const birthdays = (result.data || []).filter(function(profile) {
+        const raw = profile.data_nascita || profile.birth_date || profile.date_of_birth;
+        if (!raw) return false;
+        const value = String(raw).slice(0, 10);
+        const parts = value.split('-');
+        return parts.length === 3 && Number(parts[1]) === month && Number(parts[2]) === day;
+    });
+
+    if (birthdays.length === 0) {
+        list.innerHTML =
+            '<div class="bg-brand-dark border border-brand-border rounded-2xl p-5 text-center">' +
+                '<i class="fa-regular fa-calendar-xmark text-2xl text-gray-500 mb-2"></i>' +
+                '<p class="text-sm font-bold text-white">Nessun compleanno oggi</p>' +
+                '<p class="text-[10px] text-gray-500 mt-1">Nessuna allieva compie gli anni oggi.</p>' +
+            '</div>';
+        return;
+    }
+
+    list.innerHTML = birthdays.map(function(profile) {
+        const name = ((profile.nome || '') + ' ' + (profile.cognome || '')).trim();
+        const raw = profile.data_nascita || profile.birth_date || profile.date_of_birth;
+        const birthYear = Number(String(raw).slice(0, 4));
+        const age = birthYear > 0 ? today.getFullYear() - birthYear : null;
+
+        return '<div class="flex items-center gap-3 bg-brand-dark border border-brand-pink/30 rounded-2xl p-4">' +
+            '<div class="w-11 h-11 rounded-xl bg-brand-pink/10 border border-brand-pink/30 flex items-center justify-center">' +
+                '<i class="fa-solid fa-cake-candles text-brand-pink"></i>' +
+            '</div>' +
+            '<div class="flex-1">' +
+                '<div class="text-sm font-black text-white">' + escapeHtml(name || 'Allieva') + '</div>' +
+                '<div class="text-[10px] text-gray-400 uppercase">' +
+                    (age ? 'Compie ' + age + ' anni oggi' : 'Compleanno oggi') +
+                '</div>' +
+            '</div>' +
+        '</div>';
+    }).join('');
+};
