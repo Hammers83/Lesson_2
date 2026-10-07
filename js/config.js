@@ -4,7 +4,8 @@ const SUPABASE_URL = "https://aatelpatdppxdehbsxmz.supabase.co";
 const SUPABASE_ANON_KEY = "sb_publishable_dA9nfW05M1BFCdjRwkWRMA_XM_SxPuV";
 
 // Inizializzazione globale pulita
-window.supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+if (!window.supabase || typeof window.supabase.createClient !== 'function') { throw new Error('SDK Supabase non caricato.'); }
+window.supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
 // VERIFICA AUTENTICAZIONE E RUOLI
 async function checkAuthAndRedirect(requiredRole = null) {
