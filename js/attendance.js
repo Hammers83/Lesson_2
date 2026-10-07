@@ -126,7 +126,7 @@ window.openAttendanceModal = async function(lessonId) {
             '<button type="button" class="attendance-remove-guest px-2 text-brand-pink" title="Rimuovi"><i class="fa-solid fa-xmark"></i></button></div>';
     });
 
-    html += '</div><p class="text-[10px] text-gray-500 mt-2">Inserisci anche un'allieva già iscritta che non aveva prenotato oppure una nuova partecipante non ancora registrata.</p></div>';
+    html += '</div><p class="text-[10px] text-gray-500 mt-2">Inserisci anche un’allieva già iscritta che non aveva prenotato oppure una nuova partecipante non ancora registrata.</p></div>';
     list.innerHTML = html;
 
     document.getElementById('btn-add-attendance-guest').onclick = function() {
