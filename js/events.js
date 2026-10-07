@@ -161,7 +161,7 @@ window.openEditEventModal = function(eventId) {
 async function handleCreateEvent(e) {
     e.preventDefault();
     const sb = getSupabase();
-    const userId = window.currentSessionData?.user?.id || window.currentUser?.id;
+    const userId = (typeof currentSessionData !== 'undefined' ? currentSessionData?.user?.id : null) || window.currentUser?.id;
     const title = document.getElementById('event-title').value.trim();
     const datetimeValue = document.getElementById('event-datetime').value;
     const datetime = datetimeValue ? new Date(datetimeValue).toISOString() : null;
