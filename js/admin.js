@@ -467,7 +467,7 @@ window.openBirthdaysModal = async function() {
     const sb = getSupabase();
     const result = await sb
         .from('profiles')
-        .select('id,nome,cognome,data_nascita,birth_date,date_of_birth')
+        .select('id,nome,cognome,data_nascita')
         .eq('is_admin', false)
         .order('nome', { ascending: true });
 
@@ -478,7 +478,7 @@ window.openBirthdaysModal = async function() {
     }
 
     const birthdays = (result.data || []).filter(function(profile) {
-        const raw = profile.data_nascita || profile.birth_date || profile.date_of_birth;
+        const raw = profile.data_nascita;
         if (!raw) return false;
         const value = String(raw).slice(0, 10);
         const parts = value.split('-');
